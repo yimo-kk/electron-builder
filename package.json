@@ -1,6 +1,6 @@
 {
-  "name": "my-electron",
-  "version": "0.0.1",
+  "name": "service",
+  "version": "0.0.2",
   "author": "yimo <386169080@qq.com>",
   "description": "An electron-vue project",
   "license": null,
@@ -17,11 +17,17 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "my-electron",
+    "productName": "妮姬客服",
     "appId": "com.example.yourapp",
     "directories": {
       "output": "build"
     },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://user.nikidigital.net/"
+      }
+    ],
     "files": [
       "dist/electron/**/*"
     ],
@@ -52,6 +58,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "electron-updater": "^4.3.5",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
     "vue-router": "^3.0.1",
@@ -77,7 +84,7 @@
     "dayjs": "^1.9.6",
     "del": "^3.0.0",
     "devtron": "^1.4.0",
-    "electron": "^2.0.4",
+    "electron": "^4.0.0",
     "electron-builder": "^20.19.2",
     "electron-debug": "^1.5.0",
     "electron-devtools-installer": "^2.2.4",

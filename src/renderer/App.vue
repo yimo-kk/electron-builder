@@ -1,24 +1,23 @@
 <template>
     <a-config-provider :locale="locale">
         <div id="app">
+            <!-- <a-buttom @click="update">更新</a-buttom> -->
             <router-view v-if="isRouterAlive"></router-view>
-            <!-- <a-modal
+            <a-modal
                 title="正在更新新版本,请稍候..."
                 width="60%"
+                :closable='false'
                 :visible="visible"
-                :confirm-loading="confirmLoading"
-                @ok="handleOk"
-                @cancel="handleCancel"
+                :footer='null'
                 >
-                <p>{{ ModalText }}</p>
-            </a-modal> -->
-            <!--  <a-progress
+                 <a-progress
                 :stroke-color="{
                     '0%': '#108ee9',
                     '100%': '#87d068',
                 }"
-            :percent="99.9"
-            /> -->
+            :percent="percentage"
+            />
+            </a-modal>
             <audio id="audio" preload="auto" loop>
                 <source src="./assets/voice.mp3" type="audio/mp3" />
             </audio>
@@ -39,7 +38,8 @@ export default {
     data () {
         return {
             isRouterAlive: true, // 控制视图是否显示的变量 
-            visible:false
+            visible:false,
+            percentage:0
         }
     },
     mounted () {
@@ -69,35 +69,38 @@ export default {
                 this.$electron.ipcRenderer.send('app-exit')
             }
         });
-       
-        // 手动触发更新
-        // ipcRenderer.send('checkForUpdate')
-        //   let _this = this;
-        // //接收主进程版本更新消息
-        // this.$electron.ipcRenderer.on("message", (event, arg) => {
-
-        // if ("update-available" == arg.cmd) {
-        //    显示升级对话框
-        //     _this.dialogVisible = true;
-        // } else if ("download-progress" == arg.cmd) {
-        //     console.log(arg.message.percent);
-        //     let percent = Math.round(parseFloat(arg.message.percent));
-        //     _this.percentage = percent;
-        // } else if ("error" == arg.cmd) {
-        //     _this.dialogVisible = false;
-        //     _this.$message("更新失败");
-        // }
-        // // }
-        // });
-        // this.$electron.ipcRenderer.send("checkForUpdate");
+        
+        // 更新
+        this.$electron.ipcRenderer.send("checkForUpdate");
+        let _this = this;
+        //接收主进程版本更新消息
+        this.$electron.ipcRenderer.on("message", (event, arg) => {
+                 console.log(arg);
+            if ("update-available" == arg.cmd) {
+                // 显示升级对话框
+                _this.visible = true;
+            } else if ("download-progress" == arg.cmd) {
+                console.log(arg.message.percent);
+                //  alert(arg.message.percent)
+                let percent = Math.round(parseFloat(arg.message.percent));
+                _this.percentage = percent;
+            } else if ("error" == arg.cmd) {
+                _this.visible = false;
+                _this.$message("更新失败");
+            }
+        });
     },
     methods: {
         reload () {
             this.isRouterAlive = false // 先关闭
             this.$nextTick(function () {
             this.isRouterAlive = true // 再打开
-        })
-    }
+            })
+        },
+        // update(){
+        //      // 手动触发更新
+        //     this.$electron.ipcRenderer.send("checkForUpdate");
+        // }
     }
 };
 </script>

@@ -9,7 +9,9 @@ import {
   dialog,
 } from "electron";
 import path from "path";
-// import updateHandle from './update'
+import { autoUpdater } from 'electron-updater'
+import {updateHandle} from './update'
+const feedUrl = 'https://user.nikidigital.net/'
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
@@ -112,52 +114,48 @@ function createWindow() {
     folderPath = downloadFolder;
     mainWindow.webContents.downloadURL(url);
 })
- 
- 
-  // ipcMain.on("browser_center", () => {
-  //   mainWindow.center()
-  // });
   // 尝试更新
-  // updateHandle()
+  updateHandle(mainWindow, feedUrl)
   // 下载文件
   mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
     let path = folderPath+`\\${foldername}`
     // console.log(path)
     //设置文件存放位置
     item.setSavePath(path); 
-  //   item.on('updated', (event, state) => {
-  //     if (state === 'interrupted') {
-  //       // 下载被中断
-  //       console.log('Download is interrupted but can be resumed')
-  //     } else if (state === 'progressing') { //下载中
-  //       if (item.isPaused()) { //下载暂停
-  //         console.log('Download is paused')
-  //       } else {
-  //         // 下载中 
-  //         try {
-  //           mainWindow.webContents.send("progress",{index:downloadIndex,progress_num:item.getReceivedBytes()/item.getTotalBytes() }); 
-  //         } catch (error) {
-  //           console.log(error)
-  //         }
-  //       }
-  //     }
-  // })
-  item.once('done', (event, state) => {
-    if (state === 'completed') {
-      // 下载成功
-      console.log(`Download success`)
-      mainWindow.webContents.send("downloadSuccess",'success');
-    }
-    //  else if(state === 'interrupted'){
-    //   console.log('err')
-    //   mainWindow.webContents.send("downloadSuccess",'error');
-    // }
-    else {
-      console.log(`Download failed: ${state}`)
-      mainWindow.webContents.send("downloadSuccess",'error');
-    }
+    //   item.on('updated', (event, state) => {
+    //     if (state === 'interrupted') {
+    //       // 下载被中断
+    //       console.log('Download is interrupted but can be resumed')
+    //     } else if (state === 'progressing') { //下载中
+    //       if (item.isPaused()) { //下载暂停
+    //         console.log('Download is paused')
+    //       } else {
+    //         // 下载中 
+    //         try {
+    //           mainWindow.webContents.send("progress",{index:downloadIndex,progress_num:item.getReceivedBytes()/item.getTotalBytes() }); 
+    //         } catch (error) {
+    //           console.log(error)
+    //         }
+    //       }
+    //     }
+    // })
+    item.once('done', (event, state) => {
+      if (state === 'completed') {
+        // 下载成功
+        console.log(`Download success`)
+        mainWindow.webContents.send("downloadSuccess",'success');
+      }
+      //  else if(state === 'interrupted'){
+      //   console.log('err')
+      //   mainWindow.webContents.send("downloadSuccess",'error');
+      // }
+      else {
+        console.log(`Download failed: ${state}`)
+        mainWindow.webContents.send("downloadSuccess",'error');
+      }
+    })
   })
-  })
+
 }
 
 
@@ -227,7 +225,6 @@ app.on("ready", async () => {
   });
 });
 app.on("window-all-closed", (event) => {
-  // event.preventDefault()
   mainWindow.webContents.send("before_closed");
   if (process.platform !== "darwin") {
     app.quit();

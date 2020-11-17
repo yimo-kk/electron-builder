@@ -676,18 +676,20 @@ export default {
     // 加黑名单
     addBlacklist(){
       this.isHeadPortrait = false
-      let { state, from_ip,from_id ,from_name,kefu_code} = this.selectUser;
+      let { from_id,state, from_ip ,from_name,kefu_code} = this.selectUser;
         let params = []
       if(state){
         params=[{
           ip:from_ip,
           kefu_code,
           username:from_name,
-          type:state
+          type:state,
+          uid:from_id
         }]
       }else {
-        params=[{username:from_name,  ip:from_ip}]
+        params=[{username:from_name,  ip:from_ip,uid:from_id}]
       }
+      console.log(params,4444)
       this.$emit("addBlacklist", params);
     }, 
     // 解除黑名单
@@ -700,10 +702,11 @@ export default {
           ip:from_ip,
           kefu_code,
           username:from_name,
-          type:state
+          type:state,
+          uid:from_id
         }]
       }else {
-        params=[{username:from_name,  ip:from_ip,}]
+        params=[{username:from_name,  ip:from_ip,uid:from_id}]
       }
       this.$emit("removeblack",params);
     },

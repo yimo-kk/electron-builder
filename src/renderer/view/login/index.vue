@@ -200,8 +200,6 @@ export default {
                         kefu_code:res.data.kefu_code
                         }
                 }); 
-                 // remote.getCurrentWindow().setSize(1020, 563)
-                // this.$electron.ipcRenderer.send('browser_center')
             });
         },
         },

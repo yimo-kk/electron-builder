@@ -36,6 +36,8 @@ const state = {
     serviceMsg:{}, //客服自己发送的消息
     userJoin:{}, // 有人加入群聊
     userLeave:{}, // 有人离开
+    kefuLeave:{}, // 客服离开
+    pullUsersGroup:[], // 拉人进群
 
 }
 const getters = {
@@ -65,7 +67,6 @@ const mutations = {
     // reconnect:重新连接socket事件
     SOCKET_reconnect: (data) => {
         // console.log('重连')
-         
     },
     // 客服被删除
     SOCKET_delKefu: (state,data) => {
@@ -132,6 +133,12 @@ const mutations = {
         
 
     },
+    // 拉人进群
+    // 管理员拉人进群
+    SOCKET_pullUsersGroup(state,data){
+        state.pullUsersGroup = data
+        console.log(data,3333)
+      },
     // 新增群
     SOCKET_addGroup(state, data){
         data.noReadNum=0
@@ -194,9 +201,13 @@ const mutations = {
     },
     // 有人离开
     SOCKET_userLeave:(state, data)=>{
+        console.log(data,4444)
         state.userLeave = data
     },
-    
+    // 客服离开
+    SOCKET_kefuLeave:(state, data)=>{
+        state.kefuLeave = data
+    },
     // 当前登录状态
     SOCKET_setStatus:(state, data) => { 
         state.kefuStatus = data

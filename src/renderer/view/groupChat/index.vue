@@ -309,8 +309,15 @@ export default {
     userJoin() {
       return this.$store.state.Socket.userJoin;
     },
+    pullUsersGroup() {
+      return this.$store.state.Socket.pullUsersGroup;
+    },
     userLeave() {
       return this.$store.state.Socket.userLeave;
+    },
+    
+    kefuLeave() {
+      return this.$store.state.Socket.kefuLeave;
     },
     userInfo(){
       return JSON.parse(localStorage.getItem(this.$route.query.seller_code))[this.$route.query.kefu_code]
@@ -334,6 +341,16 @@ export default {
         }
       },
       deep: true,
+    },
+    pullUsersGroup:{
+      handler(newVal){
+        let arr = JSON.parse(JSON.stringify(newVal))
+        arr.forEach((item, index) => {
+              item.value = ++this.groupList.length;
+            });
+        this.groupList.push(...arr)
+      },
+      deep:true
     },
     // 拉黑
     groupBlack: {
@@ -423,11 +440,21 @@ export default {
     },
     userLeave:{
       handler(newVal){
-        this.getGroupMemberList({
-          group_id: this.activityGroup.activityId,
-          seller_code: this.userInfo.seller_code,
-        });
-
+        this.groupList.forEach((item,index)=>{
+          if( this.activityGroup.activityId == newVal.group_id && newVal.username == item.username){
+            this.groupList.splice(index,1)
+          }
+        })
+      },
+      deep:true
+    },
+    kefuLeave:{
+        handler(newVal){
+        this.groupList.forEach((item,index)=>{
+          if(item.kefu_code && newVal.kefu_code == item.kefu_code){
+            this.groupList.splice(index,1)
+          }
+        })
       },
       deep:true
     }
@@ -648,9 +675,10 @@ export default {
             kefu_code: item.kefu_code,
             username: item.username,
             type: item.type,
+            uid:item.uid
           };
         } else {
-          return { ip: item.login_ip, username: item.username };
+          return { ip: item.login_ip, username: item.username,uid:item.uid };
         }
       });
       this.addBlacklist(arr);
@@ -689,9 +717,10 @@ export default {
             kefu_code: item.kefu_code,
             username: item.username,
             type: item.type,
+            uid:item.uid
           };
         } else {
-          return { ip: item.login_ip, username: item.username };
+          return { ip: item.login_ip, username: item.username,uid:item.uid };
         }
       });
       this.sendBlackMessage(arr);
@@ -764,20 +793,28 @@ export default {
         let { uid, username, headimg } = item;
         return { uid, username, headimg };
       });
-      pullUsersGroup({
+     this.$socket.emit("message", {
+        cmd: "pullUsersGroup",
         group_id: this.activityGroup.activityId,
         kefu_id: this.userInfo.kefu_id,
         seller_code: this.userInfo.seller_code,
         users: arr,
-      }).then((result) => {
-        this.isAddGroup = false;
-        this.$message.success(result.msg);
-        this.addGroupListUser = [];
-        this.getGroupMemberList({
-          group_id: this.activityGroup.activityId,
-          seller_code: this.userInfo.seller_code,
-        });
       });
+      this.isAddGroup = false;
+      // pullUsersGroup({
+      //   group_id: this.activityGroup.activityId,
+      //   kefu_id: this.userInfo.kefu_id,
+      //   seller_code: this.userInfo.seller_code,
+      //   users: arr,
+      // }).then((result) => {
+      //   this.isAddGroup = false;
+      //   this.$message.success(result.msg);
+      //   this.addGroupListUser = [];
+      //   this.getGroupMemberList({
+      //     group_id: this.activityGroup.activityId,
+      //     seller_code: this.userInfo.seller_code,
+      //   });
+      // });
     },
     onChangeAddGroupUser(vals) {
       this.addGroupListUser = this.notGroupList.filter((item) => {

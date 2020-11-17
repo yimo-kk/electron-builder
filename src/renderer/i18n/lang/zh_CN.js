@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   loading:'加载中...',
   noMore:'没有更多了...',
   overLimit:'发送的消息内容超出发送长度啦', 
@@ -48,6 +48,8 @@ module.exports = {
     currentChat:'当前会话',
     awaitChat:'待接入会话',
     groupChat:'群聊管理',
+    groupChat:'群聊管理',
+    leaveMessage:'留言列表'
   },
   currentInfo:{
     userInfo:'用户信息',
@@ -118,7 +120,26 @@ module.exports = {
     nickname:'昵称',
     transferNumber:'转接人数',
     transfer:'转接'
-  }
+  },
+  message:{
+    name:'用户名',
+    number:'手机号码',
+    messageContent:'留言内容',
+    email:'邮箱',
+    messageTime:'留言时间',
+    status:'当前状态',
+    operating:'操作',
+    edit:'编辑',
+    remark:'备注',
+    editRemark:'请输入备注',
+    untreated:'未处理',
+    processed:'已处理',
+    notReached:'无法联系',
+    editSuccess:'修改成功',
+    processingTime:'处理时间'
+    
+  },
+  
 }
   
   

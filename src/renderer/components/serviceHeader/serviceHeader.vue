@@ -39,6 +39,7 @@
       </div>
     </div>
     <div class="language"><span @click="changeLocale(localeval==='zh'?'en':'zh')" >{{localeval=='zh'?'English':'中文'}}</span></div>
+   
   </div>
 </template>
 
@@ -55,7 +56,7 @@ export default {
   inject: ['reload'],
   data() {
     return {
-       localeval:localStorage.getItem('lang') || 'zh' 
+       localeval:localStorage.getItem('lang') || 'zh' ,
     };
   },
   computed: {
@@ -82,8 +83,6 @@ export default {
             name: "Login",
           });
           that.RESETVUEX()
-          // remote.getCurrentWindow().setSize(600, 563)
-          // that.$electron.ipcRenderer.send('browser_center')
         },
         onCancel() {},
       });
@@ -123,7 +122,7 @@ export default {
           localStorage.setItem('lang', 'zh')
           this.setLocale()
         }
-      }
+      },
   },
   mounted(){
      window.document.addEventListener('keyup',(e)=>{
@@ -131,6 +130,7 @@ export default {
               this.refresh()
             }
         })
+    
   }
 };
 </script>

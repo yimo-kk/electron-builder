@@ -35,6 +35,13 @@
               <a-badge :count="$store.getters.groupChatNum" :overflow-count="99"  :offset="[0,-10]" > </a-badge>
             </div>
           </a-menu-item>
+            <a-menu-item key="Message">
+            <div class="flex_center">
+              <a-icon type="audit" style="color:#fff;fontSize:18px" />
+              <p>{{$t('topTitle.leaveMessage')}}</p>
+              <a-badge :count="$store.state.message.untreatedNum" :overflow-count="99"  :offset="[0,-10]" > </a-badge>
+            </div>
+          </a-menu-item>
         </a-menu> 
       </div>
       <service-header  @setStatus='setStatus'></service-header>
@@ -49,6 +56,9 @@
       <div v-if="selectedKey === 'GroupChat'" style="height:100%">
         <GroupChat ref="GroupChat"></GroupChat>
       </div>
+       <div v-if="selectedKey === 'Message'" style="height:100%">
+        <Message></Message>
+      </div>
     </a-layout>
   </a-layout>
   </div>
@@ -59,6 +69,7 @@ import serviceHeader from "@/components/serviceHeader/serviceHeader.vue";
 import AwaitChat from "@/view/awaitChat/index";
 import CurrentChat from "@/view/currentChat/index";
 import GroupChat from "@/view/groupChat/index";
+import Message from "@/view/message/index";
 import { updateKefuStatus } from "@/api/login";
 import common from "@/mixins/common";
 import { handleRelink } from "@/api/current.js";
@@ -72,7 +83,7 @@ export default {
     AwaitChat,
     CurrentChat,
     GroupChat,
-    // HeaderTop
+    Message
   },
   data() {
     return {
@@ -131,15 +142,6 @@ export default {
     },
    },
   watch: {
-    // 切换选项也需要调用，没改变watch监听不到
-    // selectedKey(newVal){
-    //   newVal === 'CurrentChat' && (this.$refs.CurrentChat.getUserChatLog({
-    //          page:1,
-    //           username: this.currentUser.activtyeUsername,
-    //           kefu_code: this.userInfo.kefu_code,
-    //           kefu_id: this.userInfo.kefu_id,
-    //         }))
-    // },
     chatList:{
       handler(newVal){  
         newVal.length===0 &&  this.SET_ACTIVITY_GROUP({
@@ -278,10 +280,15 @@ export default {
     },
   },
   methods: {
-    ...mapActions(["getGroupList",'getAwaitList']),
+    ...mapActions(["getGroupList",'getAwaitList','getMessageList']),
     ...mapMutations(["SET_CHAT_LIST","SET_CURRENT_USER",'SET_CURRENT_CHAT_LIST','SET_CURRENT_CHAT_LIST_PUSH','SET_GROUP_CHAT_NUM','SET_STATUS','SET_ACTIVITY_GROUP']),
     selectMenu(val) {
       this.selectedKey = val.key;
+      if(val.key == 'Message'){
+        this.getMessageList({
+                seller_code:this.userInfo.seller_code
+              })
+      }
     },
     handleRelink(data) {
       handleRelink(data).then((result) => {
@@ -314,14 +321,18 @@ export default {
       this.$socket.emit("message", {
           cmd: "service-status",
           kefu_code:this.userInfo.kefu_code,
+          kefu_id:this.userInfo.kefu_id,
           seller_code:this.userInfo.seller_code,
+          username:this.userInfo.kefu_name,
+          headimg:this.userInfo.kefu_avatar,
           online_status:index,
       });
     },
-   
   },
-  created() {},
   mounted() {
+    this.getMessageList({
+       seller_code:this.userInfo.seller_code,
+    })
     this.updateKefuStatus();
     this.getGroupList({ kefu_id:this.userInfo.kefu_id});
     // 等待接入
@@ -332,6 +343,7 @@ export default {
     this.$electron.ipcRenderer.on("show_tab", (data,val)=>{
      this.selectedKey = val
     })
+ 
   },
 };
 </script> 

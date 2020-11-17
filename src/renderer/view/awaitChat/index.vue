@@ -25,7 +25,7 @@
         </p>
         <p slot="is_tourist" slot-scope="num">{{num == 0 ? $t('awaitInfo.tableTitle.Tourist'):$t('awaitInfo.tableTitle.user')}}</p>
         <div slot="uid" slot-scope="customer_id,data">
-          <a-button type="primary" size="small" @click="reception(data)">{{$t('awaitInfo.tableTitle.reception')}}</a-button>
+          <a-button type="primary" size="small" @click="reception(data)" style="font-size: 13px;">{{$t('awaitInfo.tableTitle.reception')}}</a-button>
         </div>
       </a-table>
     </div>
@@ -67,7 +67,7 @@ export default {
               dataIndex: "customer_ip",
               ellipsis: true,
               align: "center",
-                scopedSlots: {
+              scopedSlots: {
                 title: 'awaitInfo.tableTitle.visitorIp' 
               },
             },

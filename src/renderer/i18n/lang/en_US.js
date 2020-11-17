@@ -1,4 +1,4 @@
-module.exports = {
+export default  {
   loading:'loading...',
   noMore:'No more...',
   overLimit:'The content of the sent message exceeds the sending length', 
@@ -48,6 +48,7 @@ module.exports = {
     currentChat:'Current session',
     awaitChat:'Pending session',
     groupChat:'Group chat management',
+    leaveMessage:'Message List'
   },
   currentInfo:{
     userInfo:'User Info',
@@ -118,6 +119,23 @@ module.exports = {
     nickname:'Nickname',
     transferNumber:'Number of transfers',
     transfer:'Transfer'
+  },
+  message:{
+    name:'username',
+    number:'mobile phone number',
+    messageContent:'Message content',
+    email:'Email',
+    messageTime:'Message Time',
+    status:'Current state',
+    operating:'Operating',
+    edit:'Edit',
+    editSuccess:'Successfully modified',
+    remark:'Remark',
+    editRemark:'Please enter a comment',
+    untreated:'Untreated',
+    processed:'Processed',
+    notReached:'Can not be reached',
+    processingTime:'Processing time'
   }
 }
   
