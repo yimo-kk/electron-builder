@@ -19,7 +19,7 @@ export default function() {
         }
         let timeOut = setTimeout(() => {
           this.currentTime = Date.now();
-          if (this.currentTime - this.lastRunTime >= 980) {
+          if (this.currentTime - this.lastRunTime >= 990) {
             if (this.isPlaying) {
               audio.currentTime = 0;
               audio.pause();
@@ -42,12 +42,7 @@ export default function() {
       },
       setLocale(){
         this.locale = zhCN
-        
       }
     },
-    watch: {
-      locale(newVal){
-      }
-    }
   };
 }

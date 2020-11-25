@@ -32,6 +32,10 @@ let rendererConfig = {
   module: {
     rules: [
       {
+        test: /\.worker\.js$/,
+        use: { loader: 'worker-loader' }
+      },
+      {
         test: /\.scss$/,
         use: ['vue-style-loader', 'css-loader', 'sass-loader']
       },
@@ -56,6 +60,7 @@ let rendererConfig = {
         use: 'babel-loader',
         exclude: /node_modules/
       },
+
       {
         test: /\.node$/,
         use: 'node-loader'
@@ -110,7 +115,7 @@ let rendererConfig = {
   },
   plugins: [
     new VueLoaderPlugin(),
-    new MiniCssExtractPlugin({filename: 'styles.css'}),
+    new MiniCssExtractPlugin({ filename: 'styles.css' }),
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: path.resolve(__dirname, '../src/index.ejs'),
@@ -119,7 +124,7 @@ let rendererConfig = {
         removeAttributeQuotes: true,
         removeComments: true
       },
-      templateParameters(compilation, assets, options) {
+      templateParameters (compilation, assets, options) {
         return {
           compilation: compilation,
           webpack: compilation.getStats().toJson(),

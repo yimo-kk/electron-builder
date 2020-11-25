@@ -222,12 +222,10 @@ export default {
            });
           data.type === 3 && (data.message.play = false);
           if(data.type === 2) {
-            data.progress = false
             data.progress_num = 0
           }
           data.type === 0 &&
             (data.message = conversionFace(data.content || data.message));
-          // data.create_time = this.$dayjs().format('YYYY-MM-DD dddd HH:mm:ss')
           this.currentChatLogList.push(data);
         }
       },
@@ -240,7 +238,6 @@ export default {
           newVal.type === 3 && (my_send.message.play = false);
           newVal.type === 0 && (my_send.message = conversionFace(newVal.message));
           if( newVal.type === 2) {
-                my_send.progress = false
                 my_send.progress_num = 0
               }
           my_send.create_time = newVal.createtime
@@ -416,7 +413,7 @@ export default {
           userNmae = that.currentChatList[that.currentId].username
           }
         this.$confirm({    
-           title: this.$t('prompt'),
+          title: this.$t('prompt'),
           content: `${this.$t('confirmCancel') }${userNmae} ${this.$t('conversation')}`,
           okText: this.$t('determine'),
           cancelText: this.$t('cancel'),
@@ -469,8 +466,8 @@ export default {
         type: type,
       };
       let sendMessage = JSON.parse(JSON.stringify(my_send));
+      type === 0 && (sendMessage.message = conversion(my_send.message));
       // type === 3 && (my_send.message.play = false);
-      // type === 0 && (sendMessage.message = conversion(my_send.message));
       // if(type === 2) {
       //       my_send.progress = false
       //       my_send.progress_num = 0

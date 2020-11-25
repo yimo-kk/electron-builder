@@ -6,11 +6,10 @@ import {
   globalShortcut,
   ipcMain,
   Notification,
-  dialog,
 } from "electron";
 import path from "path";
-import { autoUpdater } from 'electron-updater'
-import {updateHandle} from './update'
+// import { autoUpdater } from 'electron-updater'
+import { updateHandle } from './update'
 const feedUrl = 'https://user.nikidigital.net/'
 /**
  * Set `__static` path to static files in production
@@ -30,25 +29,13 @@ const winURL =
     ? `http://localhost:9080`
     : `file://${__dirname}/index.html`;
 
-// 只能开一个应用 
-// const isSecondInstance = app.makeSingleInstance((commandLine, workingDirectory) => {
-//   // Someone tried to run a second instance, we should focus our window.
-//   if (mainWindow) {
-//     if (mainWindow.isMinimized()) mainWindow.restore()
-//     mainWindow.focus()
-//     mainWindow.show()
-//   }
-// })
-// if (isSecondInstance) {
-//   app.quit()
-// }
-function createWindow() {
+function createWindow () {
   /**
    * Initial window options
    */
   mainWindow = new BrowserWindow({
     backgroundColor: "#ccc",
-    useContentSize: true, 
+    useContentSize: true,
     width: 1020,
     height: 600,
     minWidth: 1020,
@@ -62,7 +49,7 @@ function createWindow() {
     // frame:false
   });
   mainWindow.loadURL(winURL);
-  mainWindow.on("ready-to-show", function() {
+  mainWindow.on("ready-to-show", function () {
     mainWindow.show(); // 初始化后再显示
   });
   mainWindow.on("closed", () => {
@@ -97,71 +84,79 @@ function createWindow() {
     }
     notification.on("click", () => {
       mainWindow.show();
-      mainWindow.webContents.send("show_tab",data.tab);
+      mainWindow.webContents.send("show_tab", data.tab);
     });
   });
   ipcMain.on("app-exit", () => {
     // 所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
     app.exit();
   });
-  
-  let folderPath=''
-  let foldername=''
+  // 新开窗口查看图片
+  mainWindow.webContents.on('new-window', (event, url, frameName, disposition, options, additionalFeatures) => {
+    if (frameName === 'modal') {
+      event.preventDefault()
+      Object.assign(options, {
+        modal: true,
+        width: 600,
+        parent: mainWindow
+      })
+      event.newGuest = new BrowserWindow(options)
+      event.newGuest.loadURL(url);
+      event.newGuest.setMenu(null);
+    }
+  })
+
+  let folderPath = ''
+  let foldername = ''
   let downloadIndex = null
-  ipcMain.on('download', (evt, {url,downloadFolder,index,name}) =>{
+  ipcMain.on('download', (evt, { url, downloadFolder, index, name }) => {
     downloadIndex = index
-    foldername=name
+    foldername = name
     folderPath = downloadFolder;
     mainWindow.webContents.downloadURL(url);
-})
+  })
   // 尝试更新
   updateHandle(mainWindow, feedUrl)
   // 下载文件
   mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
-    let path = folderPath+`\\${foldername}`
-    // console.log(path)
     //设置文件存放位置
-    item.setSavePath(path); 
-    //   item.on('updated', (event, state) => {
-    //     if (state === 'interrupted') {
-    //       // 下载被中断
-    //       console.log('Download is interrupted but can be resumed')
-    //     } else if (state === 'progressing') { //下载中
-    //       if (item.isPaused()) { //下载暂停
-    //         console.log('Download is paused')
-    //       } else {
-    //         // 下载中 
-    //         try {
-    //           mainWindow.webContents.send("progress",{index:downloadIndex,progress_num:item.getReceivedBytes()/item.getTotalBytes() }); 
-    //         } catch (error) {
-    //           console.log(error)
-    //         }
-    //       }
-    //     }
-    // })
+    item.setSavePath(folderPath);
+    item.on('updated', (event, state) => {
+      if (state === 'interrupted') {
+        // 下载被中断
+        console.log('Download is interrupted but can be resumed')
+      } else if (state === 'progressing') { //下载中
+        if (item.isPaused()) { //下载暂停
+          console.log('Download is paused')
+        } else {
+          // 下载中 
+          try {
+            mainWindow.webContents.send("progress", { index: downloadIndex, progress_num: item.getReceivedBytes() / item.getTotalBytes() });
+          } catch (error) {
+            console.log(error)
+          }
+        }
+      }
+    })
     item.once('done', (event, state) => {
       if (state === 'completed') {
         // 下载成功
-        console.log(`Download success`)
-        mainWindow.webContents.send("downloadSuccess",'success');
+        mainWindow.webContents.send("downloadSuccess", 'success');
       }
       //  else if(state === 'interrupted'){
       //   console.log('err')
       //   mainWindow.webContents.send("downloadSuccess",'error');
       // }
       else {
-        console.log(`Download failed: ${state}`)
-        mainWindow.webContents.send("downloadSuccess",'error');
+        mainWindow.webContents.send("downloadSuccess", 'error');
       }
     })
   })
 
 }
 
-
-
 // 设置托盘
-function implementSystemTray() {
+function implementSystemTray () {
   let timer = null,
     count = 0;
   appTray = new Tray(path.join(__static, "./icon.ico"));
@@ -184,7 +179,7 @@ function implementSystemTray() {
   ipcMain.on("message_tray", () => {
     if (!mainWindow.isFocused()) {
       if (timer) return;
-      timer = setInterval(function() {
+      timer = setInterval(function () {
         count++;
         if (count % 2 == 0) {
           appTray.setImage(path.join(__static, "./icon.ico"));
@@ -220,9 +215,12 @@ app.on("ready", async () => {
   createWindow();
   implementSystemTray();
   // 设置快捷键
-  globalShortcut.register("Ctrl+Alt+Z", function() {
+  globalShortcut.register("Ctrl+Alt+Z", function () {
     mainWindow.show();
   });
+  // app.on("render-process-gone", () => {
+  //   mainWindow.webContents.session.on('delete-app', '被杀死了')
+  // });
 });
 app.on("window-all-closed", (event) => {
   mainWindow.webContents.send("before_closed");
@@ -235,3 +233,6 @@ app.on("activate", () => {
     createWindow();
   }
 });
+
+
+

@@ -1,6 +1,6 @@
 {
   "name": "service",
-  "version": "0.0.2",
+  "version": "0.0.9",
   "author": "yimo <386169080@qq.com>",
   "description": "An electron-vue project",
   "license": null,
@@ -18,7 +18,7 @@
   },
   "build": {
     "productName": "妮姬客服",
-    "appId": "com.example.yourapp",
+    "appId": "com.example.service",
     "directories": {
       "output": "build"
     },
@@ -80,6 +80,7 @@
     "chalk": "^2.4.1",
     "copy-webpack-plugin": "^4.5.1",
     "cross-env": "^5.1.6",
+    "crypto-js": "^4.0.0",
     "css-loader": "^0.28.11",
     "dayjs": "^1.9.6",
     "del": "^3.0.0",
@@ -110,6 +111,7 @@
     "webpack-cli": "^3.0.8",
     "webpack-dev-server": "^3.1.4",
     "webpack-hot-middleware": "^2.22.2",
-    "webpack-merge": "^4.1.3"
+    "webpack-merge": "^4.1.3",
+    "worker-loader": "^3.0.5"
   }
 }

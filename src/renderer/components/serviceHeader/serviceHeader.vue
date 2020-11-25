@@ -1,71 +1,96 @@
 <template>
   <div class="serviceHeader">
-    <!-- this.$store.state.Login.userInfo -->
-    <div v-if="Object.keys( userInfo ).length>0" class="flex_up_down_center" >
+    <div v-if="Object.keys(userInfo).length > 0" class="flex_up_down_center">
       <div>
         <a-badge
-          :status=" kefuStatus == 1 ? 'success':kefuStatus == 2 ? 'warning':'default'"
+          :status="
+            kefuStatus == 1
+              ? 'success'
+              : kefuStatus == 2
+              ? 'warning'
+              : 'default'
+          "
           style="display: flex;"
-          :offset="[0,25]"
-          :title="kefuStatus == 1 ?$t('online'):kefuStatus == 2 ? $t('goAway'):$t('offline')"
+          :offset="[0, 25]"
+          :title="
+            kefuStatus == 1
+              ? $t('online')
+              : kefuStatus == 2
+              ? $t('goAway')
+              : $t('offline')
+          "
         >
-          <a-avatar :src="userInfo.kefu_avatar"   :title="kefuStatus == 1 ?$t('online'):kefuStatus == 2 ? $t('goAway'):$t('offline')" />
+          <a-avatar
+            :src="userInfo.kefu_avatar"
+            :title="
+              kefuStatus == 1
+                ? $t('online')
+                : kefuStatus == 2
+                ? $t('goAway')
+                : $t('offline')
+            "
+          />
         </a-badge>
       </div>
       <div class="flex_up_down_center login_state">
         <a-dropdown placement="bottomLeft">
           <a-button type="link">
-            {{userInfo.kefu_name }}
+            {{ userInfo.kefu_name }}
             <a-icon type="down" />
           </a-button>
           <a-menu slot="overlay">
             <a-menu-item>
-              <p @click="setStatus(1)">{{$t('online')}}</p>
+              <p @click="setStatus(1)">{{ $t('online') }}</p>
             </a-menu-item>
-            <a-menu-item> 
-              <p @click="setStatus(2)">{{$t('goAway')}}</p>
+            <a-menu-item>
+              <p @click="setStatus(2)">{{ $t('goAway') }}</p>
             </a-menu-item>
-             <!-- <a-menu-item>
+            <!-- <a-menu-item>
               <p @click="setStatus(0)">{{$t('offline')}}</p>
             </a-menu-item> -->
             <a-menu-item>
-              <p @click="refresh">{{$t('refresh')}}</p>
+              <p @click="refresh">{{ $t('refresh') }}</p>
             </a-menu-item>
             <a-menu-item>
-              <p  @click="confirm">{{$t('outLogin')}}</p>
+              <p @click="confirm">{{ $t('outLogin') }}</p>
             </a-menu-item>
           </a-menu>
         </a-dropdown>
       </div>
     </div>
-    <div class="language"><span @click="changeLocale(localeval==='zh'?'en':'zh')" >{{localeval=='zh'?'English':'中文'}}</span></div>
-   
+    <div class="language">
+      <span @click="changeLocale(localeval === 'zh' ? 'en' : 'zh')">{{
+        localeval == 'zh' ? 'English' : '中文'
+      }}</span>
+    </div>
   </div>
 </template>
 
 <script>
 const { remote } = require('electron')
-import common from "@/mixins/common";
+import common from '@/mixins/common'
 import moment from 'moment'
 import 'moment/locale/zh-cn'
 moment.locale('zh-cn')
-import { mapMutations} from "vuex";
+import { mapMutations } from 'vuex'
 export default {
-  name: "ServiceHeader",
-  mixins: [common()],
+  name: 'ServiceHeader',
   inject: ['reload'],
+  mixins: [common()],
   data() {
     return {
-       localeval:localStorage.getItem('lang') || 'zh' ,
-    };
+      localeval: localStorage.getItem('lang') || 'zh',
+    }
   },
   computed: {
-     kefuStatus() {
+    kefuStatus() {
       return this.$store.state.Socket.kefuStatus.online_status
     },
-    userInfo(){
-      return JSON.parse(localStorage.getItem(this.$route.query.seller_code))[this.$route.query.kefu_code]
-    }
+    userInfo() {
+      return JSON.parse(localStorage.getItem(this.$route.query.seller_code))[
+        this.$route.query.kefu_code
+      ]
+    },
   },
   methods: {
     moment,
@@ -78,61 +103,66 @@ export default {
         okText: this.$t('determine'),
         cancelText: this.$t('cancel'),
         onOk() {
-          that.$emit('setStatus',0)
+          that.$emit('setStatus', 0)
           that.$router.push({
-            name: "Login",
-          });
+            name: 'Login',
+          })
           that.RESETVUEX()
         },
         onCancel() {},
-      });
+      })
     },
-    refresh(){
-      // this.reload()
+    refresh() {
       location.reload()
+      // this.reload()
     },
-    setStatus(index){
-      if(this.kefuStatus== index) return
+    setStatus(index) {
+      if (this.kefuStatus == index) return
       let that = this
-       this.$confirm({
+      this.$confirm({
         title: this.$t('prompt'),
-        content: `${this.$t('update')} ${index == 1 ?this.$t('online'):index == 2 ? this.$t('goAway'):this.$t('offline')} ${this.$t('status')} `,
-       okText: this.$t('determine'),
+        content: `${this.$t('update')} ${
+          index == 1
+            ? this.$t('online')
+            : index == 2
+            ? this.$t('goAway')
+            : this.$t('offline')
+        } ${this.$t('status')} `,
+        okText: this.$t('determine'),
         cancelText: this.$t('cancel'),
-         onOk() {
-           that.$emit('setStatus',index)
-           if(index===1){
-             that.refresh()
-           }
-         } 
-      });
+        onOk() {
+          that.$emit('setStatus', index)
+          if (index === 1) {
+            that.refresh()
+          }
+        },
+      })
     },
-    changeLocale (localeval) {
+    changeLocale(localeval) {
       this.localeval = localeval
-        if (localeval === 'en') {
-          moment.locale('en')
-          this.$i18n.locale = 'en'
-          localStorage.setItem('lang', 'en')
-          this.$nextTick(()=>{
-            this.locale = null
-          })
-        } else {
-          moment.locale('zh')
-          this.$i18n.locale = 'zh'
-          localStorage.setItem('lang', 'zh')
-          this.setLocale()
-        }
-      },
-  },
-  mounted(){
-     window.document.addEventListener('keyup',(e)=>{
-            if(e.code === 'F5'){
-              this.refresh()
-            }
+      if (localeval === 'en') {
+        moment.locale('en')
+        this.$i18n.locale = 'en'
+        localStorage.setItem('lang', 'en')
+        this.$nextTick(() => {
+          this.locale = null
         })
-    
-  }
-};
+      } else {
+        moment.locale('zh')
+        this.$i18n.locale = 'zh'
+        localStorage.setItem('lang', 'zh')
+        this.setLocale()
+      }
+    },
+  },
+  mounted() {
+    window.document.addEventListener('keyup', (e) => {
+      if (e.code === 'F5') {
+        this.refresh()
+      }
+    })
+  },
+}
 </script>
 
 <style lang="less" scoped>
@@ -150,11 +180,11 @@ export default {
   .notLogin {
     padding-top: 10px;
   }
-  .language{
+  .language {
     display: flex;
     padding-right: 10px;
     margin-right: -20px;
-    span{ 
+    span {
       border-radius: 10px;
       border: 1px solid #ccc;
       line-height: 20px;

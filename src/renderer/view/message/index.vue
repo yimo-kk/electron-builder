@@ -5,7 +5,7 @@
       :data-source="$store.state.message.messageList"
       :rowKey="
         (row) => {
-          return row.id;
+          return row.id
         }
       "
       size="small"
@@ -15,10 +15,10 @@
       </template>
       <a href="javaScript:void(0)" slot="status" slot-scope="status">{{
         status == 0
-          ? $t("message.untreated")
+          ? $t('message.untreated')
           : status == 1
-          ? $t("message.processed")
-          : $t("message.notReached")
+          ? $t('message.processed')
+          : $t('message.notReached')
       }}</a>
       <span
         slot="add_time"
@@ -34,7 +34,7 @@
           size="small"
           style="font-size: 13px"
         >
-          {{ $t("message.edit") }}
+          {{ $t('message.edit') }}
         </a-button>
       </span>
     </a-table>
@@ -46,23 +46,23 @@
     >
       <div>
         <div class="flex status">
-          <p class="title">{{ $t("message.status") }}</p>
+          <p class="title">{{ $t('message.status') }}</p>
           <a-radio-group
             name="radioGroup"
             v-model="selectStatus"
             :disabled="oldSelectStatus !== 0"
           >
-            <a-radio :value="0">{{ $t("message.untreated") }}</a-radio>
-            <a-radio :value="1">{{ $t("message.processed") }}</a-radio>
-            <a-radio :value="2">{{ $t("message.notReached") }}</a-radio>
+            <a-radio :value="0">{{ $t('message.untreated') }}</a-radio>
+            <a-radio :value="1">{{ $t('message.processed') }}</a-radio>
+            <a-radio :value="2">{{ $t('message.notReached') }}</a-radio>
           </a-radio-group>
         </div>
         <div v-if="updateTime" class="flex status">
-          <p class="title">{{ $t("message.processingTime") }}</p>
+          <p class="title">{{ $t('message.processingTime') }}</p>
           <p>{{ updateTime | filterTime }}</p>
         </div>
         <div class="flex">
-          <p class="title">{{ $t("message.remark") }}</p>
+          <p class="title">{{ $t('message.remark') }}</p>
           <a-textarea
             v-model="remark"
             :placeholder="$t('message.editRemark')"
@@ -75,78 +75,78 @@
 </template>
 
 <script>
-import dayjs from "dayjs";
-import { updateLeaveMsg } from "@/api/message.js";
-import { mapActions,mapMutations } from "vuex";
+import dayjs from 'dayjs'
+import { updateLeaveMsg } from '@/api/message.js'
+import { mapActions, mapMutations } from 'vuex'
 const columns = [
   {
-    slotName: "message.name",
-    dataIndex: "username",
+    slotName: 'message.name',
+    dataIndex: 'username',
     ellipsis: true,
-    align: "center",
+    align: 'center',
     scopedSlots: {
-      title: "message.name",
+      title: 'message.name',
     },
   },
   {
-    slotName: "message.number",
-    dataIndex: "phone",
+    slotName: 'message.number',
+    dataIndex: 'phone',
     ellipsis: true,
-    align: "center",
+    align: 'center',
     scopedSlots: {
-      title: "message.number",
+      title: 'message.number',
     },
   },
   {
-    slotName: "message.messageContent",
-    dataIndex: "content",
-    align: "center",
+    slotName: 'message.messageContent',
+    dataIndex: 'content',
+    align: 'center',
     ellipsis: true,
     scopedSlots: {
-      title: "message.messageContent",
+      title: 'message.messageContent',
     },
   },
   {
-    slotName: "message.email",
+    slotName: 'message.email',
     ellipsis: true,
-    dataIndex: "email",
-    align: "center",
+    dataIndex: 'email',
+    align: 'center',
     scopedSlots: {
-      title: "message.email",
+      title: 'message.email',
     },
   },
   {
-    slotName: "message.messageTime",
-    dataIndex: "add_time",
+    slotName: 'message.messageTime',
+    dataIndex: 'add_time',
     ellipsis: true,
-    align: "center",
+    align: 'center',
     scopedSlots: {
-      customRender: "add_time",
-      title: "message.messageTime",
+      customRender: 'add_time',
+      title: 'message.messageTime',
     },
   },
   {
-    slotName: "message.status",
-    dataIndex: "status",
+    slotName: 'message.status',
+    dataIndex: 'status',
     ellipsis: true,
-    align: "center",
+    align: 'center',
     scopedSlots: {
-      customRender: "status",
-      title: "message.status",
+      customRender: 'status',
+      title: 'message.status',
     },
   },
   {
-    slotName: "message.operating",
-    key: "id",
-    align: "center",
+    slotName: 'message.operating',
+    key: 'id',
+    align: 'center',
     scopedSlots: {
-      title: "message.operating",
-      customRender: "action",
+      title: 'message.operating',
+      customRender: 'action',
     },
   },
-];
+]
 export default {
-  name: "Message",
+  name: 'Message',
   components: {},
   data() {
     return {
@@ -154,71 +154,110 @@ export default {
       visible: false,
       selectStatus: 0,
       oldSelectStatus: null,
-      remark: "",
+      remark: '',
       id: null,
       updateTime: null,
-    };
+    }
   },
   filters: {
     filterTime(time) {
-      return dayjs.unix(time).format("YYYY-MM-DD  HH:mm:ss");
+      return dayjs.unix(time).format('YYYY-MM-DD  HH:mm:ss')
     },
   },
   computed: {
     userInfo() {
       return JSON.parse(localStorage.getItem(this.$route.query.seller_code))[
         this.$route.query.kefu_code
-      ];
+      ]
+    },
+    saveLeaveMsg() {
+      return this.$store.state.message.saveLeaveMsg
     },
   },
-  watch: {},
+  watch: {
+    saveLeaveMsg: {
+      handler() {
+        this.getMessageList({
+          seller_code: this.userInfo.seller_code,
+        })
+      },
+      deep: true,
+    },
+  },
   methods: {
-    ...mapActions(["getMessageList"]),
+    ...mapActions(['getMessageList']),
     ...mapMutations(['SET_UNTREATED_NUM']),
     handleOk() {
-      updateLeaveMsg({
+      if (!this.selectStatus) {
+        this.$message.error(this.$t('message.selectStatus'))
+        return
+      }
+      this.$socket.emit('message', {
+        cmd: 'saveLeaveMsg',
         id: this.id,
         status: this.selectStatus,
         remarks: this.remark,
         seller_code: this.userInfo.seller_code,
+        kefu_id: this.userInfo.kefu_id,
       })
-        .then((result) => {
-          if (result.code === 0) {
-            this.visible = false;
-            this.selectStatus = 0;
-            this.remark = "";
-            this.id = null;
-            this.oldSelectStatus = null;
-            this.$message.success(this.$t("message.editSuccess"));
-            this.getMessageList({
-              seller_code: this.userInfo.seller_code,
-            });
-            let num = JSON.parse(JSON.stringify(this.$store.state.message.untreatedNum))
-            num--
-            this.SET_UNTREATED_NUM(num)
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      this.visible = false
+      this.selectStatus = 0
+      this.remark = ''
+      this.id = null
+      this.oldSelectStatus = null
+      this.$message.success(this.$t('message.editSuccess'))
+      // this.getMessageList({
+      //   seller_code: this.userInfo.seller_code,
+      // })
+      // let num = JSON.parse(
+      //   JSON.stringify(this.$store.state.message.untreatedNum)
+      // )
+      // num--
+      // this.SET_UNTREATED_NUM(num)
+      // updateLeaveMsg({
+      //   id: this.id,
+      //   status: this.selectStatus,
+      //   remarks: this.remark,
+      //   seller_code: this.userInfo.seller_code,
+      //   kefu_id:this.userInfo.kefu_id
+      // })
+      //   .then((result) => {
+      //     if (result.code === 0) {
+      //       this.visible = false;
+      //       this.selectStatus = 0;
+      //       this.remark = "";
+      //       this.id = null;
+      //       this.oldSelectStatus = null;
+      //       this.$message.success(this.$t("message.editSuccess"));
+      //       this.getMessageList({
+      //         seller_code: this.userInfo.seller_code,
+      //       });
+      //       let num = JSON.parse(JSON.stringify(this.$store.state.message.untreatedNum))
+      //       num--
+      //       this.SET_UNTREATED_NUM(num)
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     console.log(err);
+      //   });
     },
     handleCancel() {
-      this.visible = false;
+      this.visible = false
     },
     edit(val) {
-      this.updateTime = val.update_time;
-      this.remark = val.remarks;
-      this.selectStatus = val.status;
-      this.oldSelectStatus = val.status;
-      this.id = val.id;
-      this.visible = true;
+      this.updateTime = val.update_time
+      this.remark = val.remarks
+      this.selectStatus = val.status
+      this.oldSelectStatus = val.status
+      this.id = val.id
+      this.visible = true
     },
   },
   created() {},
   mounted() {},
-};
+}
 </script>
-<style lang='less' scoped>
+<style lang="less" scoped>
 .message {
   padding: 10px;
 }
