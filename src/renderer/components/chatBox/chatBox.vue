@@ -4,7 +4,15 @@
       <a-spin></a-spin>
     </div>
     <div class="chat_body">
-      <div class="chat_all" ref="chatMain">
+      <div
+        class="chat_all"
+        :style="{
+          backgroundImage: `url(${
+            isName ? $store.state.Socket.activityGroup.img : ''
+          })`,
+        }"
+        ref="chatMain"
+      >
         <div class="more_chat_log ">
           <a-spin v-if="isMore" :tip="$t('loading')" />
         </div>
@@ -107,8 +115,8 @@
                     ></Audio>
                   </div>
                 </div>
-                <div
-                  v-if="isTts"
+                <!-- <div
+                  v-if="isTts && item.type === 0"
                   class="playIcon"
                   status="stop"
                   :title="$t('tts')"
@@ -122,7 +130,7 @@
                   <div
                     :class="['large', ttsIndex == index ? '' : 'stopanimate']"
                   ></div>
-                </div>
+                </div> -->
               </div>
             </div>
             <div
@@ -257,15 +265,18 @@
           style="height:75px"
           @keydown="enter"
         />
-        <div
-          class="send"
-          @click="sendMessage(sendText, 0)"
-          :title="
-            `Enter  ${$t('currentInfo.send')}
+        <div class="send">
+          <a-checkbox @change="textToSpeech" v-show="!isName">
+            {{ $t('textToSpeech') }}
+          </a-checkbox>
+          <p
+            :class="['send_btn', sendText.length ? 'activt_btn' : '']"
+            @click="sendMessage(sendText, 0)"
+            :title="
+              `Enter  ${$t('currentInfo.send')}
 Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
-          "
-        >
-          <p :class="['send_btn', sendText.length ? 'activt_btn' : '']">
+            "
+          >
             {{ $t('currentInfo.send') }}
           </p>
         </div>
@@ -381,8 +392,8 @@ const recorder = new Recorder({
 import { serviceSendChatFile, uploadVoice } from '@/api/current.js'
 const appData = require('@/assets/emojis.json')
 import Audio from './audio'
-import IatRecorder from '@/utils/js/IatRecorder.js'
-const iatRecorder = new IatRecorder('en_us', 'mandarin', '5fbb80a3')
+// import IatRecorder from '@/utils/js/IatRecorder.js'
+// const iatRecorder = new IatRecorder('en_us')
 export default {
   name: 'ChatBox',
   props: {
@@ -443,8 +454,8 @@ export default {
       selectUser: {},
       timer: null,
       isDownload: false,
-      ttsIndex: null,
-      iatRecorder,
+      // ttsIndex: null,
+      isTextToSpeech: false,
     }
   },
   computed: {
@@ -499,12 +510,13 @@ export default {
         this.sendText = conversionFace(str)
       }
     },
-    'iatRecorder.status': {
-      handler(newVal) {
-        newVal === 'endPlay' && (this.ttsIndex = null)
-      },
-      deep: true,
-    },
+    // 'iatRecorder.status': {
+    //   handler(newVal) {
+    //     ;(newVal === 'endPlay' || newVal === 'errorTTS') &&
+    //       (this.ttsIndex = null)
+    //   },
+    //   deep: true,
+    // },
   },
   methods: {
     enter(event) {
@@ -885,19 +897,6 @@ export default {
           }
         }
       })
-      // let topX
-      // let leftY
-      // this.$refs.viewImage.addEventListener('mousedown', (e) => {
-      //   console.log(e, 111)
-      //   topX = e.clientX
-      //   leftY = e.clientY
-      // })
-      // this.$refs.viewImage.addEventListener('mouseup', (e) => {
-      //   console.log(e, 222)
-      //   el.style.position = 'absolute'
-      //   el.style.top = e.pageY + 'px'
-      //   el.style.left = e.pageX + 'px'
-      // })
     },
     logMore() {
       // 滚动到顶部 加载更多
@@ -923,32 +922,37 @@ export default {
         this.isHeadPortrait = false
       })
     },
-    // 文字转语音开始
-    textChange() {
-      let that = this
-      if (
-        ['init', 'endPlay', 'errorTTS'].indexOf(this.iatRecorder.status) > -1
-      ) {
-        this.iatRecorder.start()
-      } else {
-        this.iatRecorder.stop()
-      }
-    },
-    // 文字转语音结束
-    translationEnd() {
-      this.iatRecorder.stop()
-    },
-    // 转语音的文字
-    translationStart(val, index) {
-      if (this.ttsIndex && this.ttsIndex === index) {
-        this.iatRecorder.stop()
-        return
-      }
-      this.ttsIndex = index
-      this.iatRecorder.setParams({
-        text: val,
-      })
-      this.textChange()
+    // // 文字转语音开始
+    // textChange() {
+    //   let that = this
+    //   if (
+    //     ['init', 'endPlay', 'errorTTS'].indexOf(this.iatRecorder.status) > -1
+    //   ) {
+    //     this.iatRecorder.start()
+    //   } else {
+    //     this.iatRecorder.stop()
+    //   }
+    // },
+    // // 文字转语音结束
+    // translationEnd() {
+    //   this.iatRecorder.stop()
+    // },
+    // // 转语音的文字
+    // translationStart(val, index) {
+    //   if (this.ttsIndex && this.ttsIndex === index) {
+    //     this.iatRecorder.stop()
+    //     return
+    //   }
+    //   this.ttsIndex = index
+    //   this.iatRecorder.setParams({
+    //     text: val,
+    //   })
+    //   this.textChange()
+    // },
+    // 当选择文字转语音
+    textToSpeech(e) {
+      this.isTextToSpeech = e.target.checked
+      console.log(e.target.checked)
     },
   },
   mounted() {
@@ -977,6 +981,9 @@ export default {
     // background-color: #f5f5f5;
     overflow: auto;
     padding: 10px;
+    height: 100%;
+    background-position: center;
+    background-size: cover;
 
     &::-webkit-scrollbar {
       width: 4px;
@@ -1108,7 +1115,10 @@ export default {
       top: 120px;
       bottom: 10px;
       right: 10px;
-
+      /deep/ .ant-checkbox + span {
+        padding-left: 0;
+        color: #ccc;
+      }
       .send_btn {
         display: inline-block;
         width: 50px;

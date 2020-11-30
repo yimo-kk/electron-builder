@@ -554,6 +554,7 @@ export default {
         is_invite: data.is_invite,
         on_file: data.on_file,
         on_voice: data.on_voice,
+        img: data.group_avatar,
       })
       this.chatLogList = []
       this.page = 1
@@ -839,12 +840,6 @@ export default {
         group_id: this.activityGroup.activityId,
         seller_code: this.userInfo.seller_code,
       })
-
-      // kickUsersGroup({
-      //   group_id: this.activityGroup.activityId,
-      //   users: data,
-      // }).then((result) => {
-      // });
       this.checkedList = []
     },
     getNotGroupUsersList(val = '') {
@@ -890,20 +885,6 @@ export default {
         users: arr,
       })
       this.isAddGroup = false
-      // pullUsersGroup({
-      //   group_id: this.activityGroup.activityId,
-      //   kefu_id: this.userInfo.kefu_id,
-      //   seller_code: this.userInfo.seller_code,
-      //   users: arr,
-      // }).then((result) => {
-      //   this.isAddGroup = false;
-      //   this.$message.success(result.msg);
-      //   this.addGroupListUser = [];
-      //   this.getGroupMemberList({
-      //     group_id: this.activityGroup.activityId,
-      //     seller_code: this.userInfo.seller_code,
-      //   });
-      // });
     },
     onChangeAddGroupUser(vals) {
       this.addGroupListUser = this.notGroupList.filter((item) => {
@@ -965,6 +946,7 @@ export default {
               is_invite: this.$store.state.Socket.chatList[0].is_invite,
               on_file: this.$store.state.Socket.chatList[0].on_file,
               on_voice: this.$store.state.Socket.chatList[0].on_voice,
+              img: this.$store.state.Socket.chatList[0].group_avatar,
             })
             let arr = JSON.parse(
               JSON.stringify(this.$store.state.Socket.chatList)
@@ -989,7 +971,8 @@ export default {
                   item.group_name !== this.activityGroup.activityTitle ||
                   item.is_invite !== this.activityGroup.is_invite ||
                   item.on_file !== this.activityGroup.on_file ||
-                  item.on_voice !== this.activityGroup.on_voice
+                  item.on_voice !== this.activityGroup.on_voice ||
+                  item.img !== this.activityGroup.group_avatar
                 ) {
                   this.SET_ACTIVITY_GROUP({
                     activityId: this.activityGroup.activityId,
@@ -997,6 +980,7 @@ export default {
                     is_invite: item.is_invite,
                     on_file: item.on_file,
                     on_voice: item.on_voice,
+                    img: item.group_avatar,
                   })
                 }
               }

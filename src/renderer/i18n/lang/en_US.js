@@ -1,4 +1,7 @@
 export default {
+  getOutApp: 'This operation key exits the program, do you want to continue?',
+  textToSpeech: 'Text-to-speech',
+  playErr: 'Play failed!',
   tts: 'Play text',
   sendNewMessage: "Sent you a new message",
   rogerThat: 'Receive a new group message!',

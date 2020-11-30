@@ -1,4 +1,7 @@
 export default {
+  getOutApp: '此操作键退出程序,是否继续?',
+  textToSpeech: '文字转语音',
+  playErr: '播放失败！',
   tts: '播放文字',
   sendNewMessage: "给你发送了一条新消息了",
   rogerThat: '收到一条新的群消息！',

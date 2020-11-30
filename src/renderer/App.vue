@@ -25,6 +25,7 @@
 </template>
 
 <script>
+import { DebounceBy } from '@/utils/libs'
 import common from './mixins/common'
 export default {
   name: 'my-project',
@@ -72,21 +73,29 @@ export default {
 
     // 退出程序事件
     this.$electron.ipcRenderer.on('before_closed', () => {
-      let { kefu_code, seller_code } = this.$route.query
+      let that = this
+      // 退出
+      // this.$confirm({
+      //   title: this.$t('prompt'),
+      //   content: this.$t('getOutApp'),
+      //   okText: this.$t('determine'),
+      //   cancelText: this.$t('cancel'),
+      //   onOk: DebounceBy(() => {
+      let { kefu_code, seller_code } = that.$route.query
       try {
         let info = JSON.parse(localStorage.getItem(seller_code))
         delete info[kefu_code]
         localStorage.setItem(seller_code, JSON.stringify(info))
       } finally {
-        this.$router.push({ name: 'Login' })
-        this.$store.commit('SET_USER_INFO', '')
-        this.$store.commit('RESETVUEX')
-        this.$electron.ipcRenderer.send('app-exit')
-        if (this.$route.query.seller_code && this.$route.query.kefu_code) {
+        that.$router.push({ name: 'Login' })
+        that.$store.commit('SET_USER_INFO', '')
+        that.$store.commit('RESETVUEX')
+        that.$electron.ipcRenderer.send('app-exit')
+        if (that.$route.query.seller_code && that.$route.query.kefu_code) {
           let userInfo = JSON.parse(
-            localStorage.getItem(this.$route.query.seller_code)
-          )[this.$route.query.kefu_code]
-          this.$socket.emit('message', {
+            localStorage.getItem(that.$route.query.seller_code)
+          )[that.$route.query.kefu_code]
+          that.$socket.emit('message', {
             cmd: 'service-status',
             kefu_code: userInfo.kefu_code,
             kefu_id: userInfo.kefu_id,
@@ -97,6 +106,9 @@ export default {
           })
         }
       }
+      // }, 200),
+      // onCancel() {},
+      // })
     })
   },
   methods: {

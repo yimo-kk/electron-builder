@@ -2,17 +2,16 @@
 const APPID = '5fbb80a3'
 const API_SECRET = '2346c7c89c77407ab80d4592fccdaa93'
 const API_KEY = '7ee01a8f5ce98f0c8282a37a46f117c1'
+import Toast from '@/components/Toast/toast'
 import CryptoJS from 'crypto-js'
 import Worker from './transcode.worker.js'
 import { Base64 } from 'js-base64'
 const transWorker = new Worker()
-
 function getWebsocketUrl () {
   return new Promise((resolve, reject) => {
     var apiKey = API_KEY
     var apiSecret = API_SECRET
     var url = 'wss://tts-api.xfyun.cn/v2/tts'
-    // //tts-api.xfyun.cn/v2/tts
     var host = location.host
     var date = new Date().toGMTString()
     var algorithm = 'hmac-sha256'
@@ -27,7 +26,8 @@ function getWebsocketUrl () {
   })
 }
 const IatRecorder = class TTSRecorder {
-  constructor({
+  constructor(
+    language,
     speed = 50,
     voice = 50,
     pitch = 50,
@@ -36,7 +36,8 @@ const IatRecorder = class TTSRecorder {
     text = '',
     tte = 'UTF8',
     defaultText = '请输入您要合成的文本',
-  } = {}) {
+  ) {
+    this.language = language || 'zh_cn'
     this.speed = speed
     this.voice = voice
     this.pitch = pitch
@@ -60,12 +61,13 @@ const IatRecorder = class TTSRecorder {
     this.status = status
   }
   // 设置合成相关参数
-  setParams ({ speed, voice, pitch, text, voiceName, tte }) {
+  setParams ({ speed, voice, pitch, text, voiceName, tte, language }) {
     speed !== undefined && (this.speed = speed)
     voice !== undefined && (this.voice = voice)
     pitch !== undefined && (this.pitch = pitch)
     text && (this.text = text)
     tte && (this.tte = tte)
+    language && (this.language = language)
     voiceName && (this.voiceName = voiceName)
     this.resetAudio()
   }
@@ -79,7 +81,8 @@ const IatRecorder = class TTSRecorder {
       } else if ('MozWebSocket' in window) {
         ttsWS = new MozWebSocket(url)
       } else {
-        alert('浏览器不支持WebSocket')
+        this.setStatus('endPlay')
+        Toast('浏览器不支持WebSocket')
         return
       }
       this.ttsWS = ttsWS
@@ -95,8 +98,6 @@ const IatRecorder = class TTSRecorder {
       ttsWS.onerror = e => {
         clearTimeout(this.playTimeout)
         this.setStatus('errorTTS')
-        alert('WebSocket报错，请f12查看详情')
-        console.error(`详情查看：${encodeURI(url.replace('wss:', 'https:'))}`)
       }
       ttsWS.onclose = e => {
         console.log(e)
@@ -109,9 +110,10 @@ const IatRecorder = class TTSRecorder {
   webSocketSend () {
     var params = {
       common: {
-        app_id: this.appId, // APPID
+        app_id: this.appId,
       },
       business: {
+        language: this.language,
         aue: 'raw',
         auf: 'audio/L16;rate=16000',
         vcn: this.voiceName,
@@ -163,8 +165,7 @@ const IatRecorder = class TTSRecorder {
     let jsonData = JSON.parse(resultData)
     // 合成失败
     if (jsonData.code !== 0) {
-      alert(`合成失败: ${jsonData.code}:${jsonData.message}`)
-      console.error(`${jsonData.code}:${jsonData.message}`)
+      this.setStatus('endPlay')
       this.resetAudio()
       return
     }
@@ -202,7 +203,8 @@ const IatRecorder = class TTSRecorder {
     try {
       audioBuffer = this.audioContext.createBuffer(1, audioData.length, 22050)
     } catch (error) {
-      alert('播放失败！')
+      Toast('播放失败！')
+      this.setStatus('errorTTS')
     }
     let nowBuffering = audioBuffer.getChannelData(0)
     if (audioBuffer.copyToChannel) {
@@ -248,7 +250,7 @@ const IatRecorder = class TTSRecorder {
         this.audioInit()
       }
       if (!this.audioContext) {
-        alert('该浏览器不支持webAudioApi相关接口')
+        Toast('该浏览器不支持webAudioApi相关接口')
         return
       }
       this.connectWebSocket()
@@ -258,5 +260,4 @@ const IatRecorder = class TTSRecorder {
     this.audioStop()
   }
 }
-
 export default IatRecorder

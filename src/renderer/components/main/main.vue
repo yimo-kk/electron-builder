@@ -190,6 +190,7 @@ export default {
             is_invite: null,
             on_file: 0,
             on_voice: 0,
+            img: '',
           })
       },
       deep: true,
@@ -335,9 +336,6 @@ export default {
           )
           this.SET_CHAT_LIST(chatList)
         }
-        // else if(this.$store.state.Socket.activityGroup.activityId != newVal.group_id){
-
-        // }
       },
       deep: true,
     },

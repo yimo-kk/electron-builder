@@ -16,7 +16,8 @@ const state = {
     activityTitle: "",
     is_invite: null,
     on_file: 0,
-    on_voice: 0
+    on_voice: 0,
+    img: ''
   },
   userMessage: {}, // 客服收到用户消息
   relinkMessage: {}, // 客服收到转接消息
@@ -137,6 +138,7 @@ const mutations = {
       state.activityGroup.is_invite = data.is_invite
       state.activityGroup.on_file = data.on_file
       state.activityGroup.on_voice = data.on_voice
+      state.activityGroup.img = data.group_avatar
     }
     state.chatList = list
 
@@ -198,7 +200,8 @@ const mutations = {
         activityTitle: state.chatList[0].group_name,
         is_invite: state.chatList[0].is_invite,
         on_file: state.chatList[0].on_file,
-        on_voice: state.chatList[0].on_voice
+        on_voice: state.chatList[0].on_voice,
+        img: state.chatList[0].group_avatar
       }
     }
 
@@ -269,6 +272,7 @@ const mutations = {
     state.activityGroup.activityId = null
     state.activityGroup.activityTitle = ""
     state.activityGroup.is_invite = null
+    state.activityGroup.img = ''
     state.userMessage = {} // 客服收到用户消息
     state.relinkMessage = {} // 客服收到转接消息
     state.refuseMessage = {} // 转接是否被接受
