@@ -115,22 +115,6 @@
                     ></Audio>
                   </div>
                 </div>
-                <!-- <div
-                  v-if="isTts && item.type === 0"
-                  class="playIcon"
-                  status="stop"
-                  :title="$t('tts')"
-                  no="1"
-                  @click="translationStart(item.content || item.message, index)"
-                >
-                  <div class="small"></div>
-                  <div
-                    :class="['middle', ttsIndex == index ? '' : 'stopanimate']"
-                  ></div>
-                  <div
-                    :class="['large', ttsIndex == index ? '' : 'stopanimate']"
-                  ></div>
-                </div> -->
               </div>
             </div>
             <div
@@ -394,8 +378,10 @@ const appData = require('@/assets/emojis.json')
 import Audio from './audio'
 // import IatRecorder from '@/utils/js/IatRecorder.js'
 // const iatRecorder = new IatRecorder('en_us')
+import chat from '@/mixins/chat'
 export default {
   name: 'ChatBox',
+  mixins: [chat()],
   props: {
     isName: {
       type: Boolean,
@@ -455,7 +441,6 @@ export default {
       timer: null,
       isDownload: false,
       // ttsIndex: null,
-      isTextToSpeech: false,
     }
   },
   computed: {
@@ -912,16 +897,16 @@ export default {
         }
       })
     },
-    menuNotClick() {
-      // 下面这句代码是获取 点击的区域是否包含你的菜单，如果包含，说明点击的是菜单以外，不包含则为菜单以内
-      document.addEventListener('click', (e) => {
-        let flag = e.target.contains(
-          document.getElementsByClassName('click_head_portrait')[0]
-        )
-        if (flag) return
-        this.isHeadPortrait = false
-      })
-    },
+    // menuNotClick() {
+    //   // 下面这句代码是获取 点击的区域是否包含你的菜单，如果包含，说明点击的是菜单以外，不包含则为菜单以内
+    //   document.addEventListener('click', (e) => {
+    //     let flag = e.target.contains(
+    //       document.getElementsByClassName('click_head_portrait')[0]
+    //     )
+    //     if (flag) return
+    //     this.isHeadPortrait = false
+    //   })
+    // },
     // // 文字转语音开始
     // textChange() {
     //   let that = this
@@ -951,13 +936,13 @@ export default {
     // },
     // 当选择文字转语音
     textToSpeech(e) {
-      this.isTextToSpeech = e.target.checked
-      console.log(e.target.checked)
+      this.$emit('textToSpeech', e.target.checked)
     },
   },
   mounted() {
     // 将聊天框滚轮拉到最底部
     this.messageDown()
+    this.menuNotClick()
     this.logMore()
     this.downloadProcess()
     this.changeImageSize()
@@ -966,394 +951,6 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.chat {
-  height: 100%;
-
-  .chat_body {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    background-color: #f5f5f5;
-  }
-  .chat_all {
-    // background-color: #f5f5f5;
-    overflow: auto;
-    padding: 10px;
-    height: 100%;
-    background-position: center;
-    background-size: cover;
-
-    &::-webkit-scrollbar {
-      width: 4px;
-      /*高宽分别对应横竖滚动条的尺寸*/
-      border-radius: 4px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      border-radius: 4px;
-      background: #d8d8d8;
-    }
-    .forbid {
-      font-size: 14px;
-      color: #ccc;
-      text-align: center;
-    }
-    .more_chat_log {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translate(-50%, 0);
-    }
-    .more_log {
-      cursor: pointer;
-      font-size: 12px;
-      color: #ccc;
-      text-align: center;
-    }
-  }
-
-  .message_left {
-    display: flex;
-    // align-items: center;
-    padding: 10px 0;
-  }
-
-  .chat_head_portrait {
-    width: 30px;
-    height: 30px;
-    border-radius: 5px;
-    margin-bottom: 10px;
-  }
-
-  .name_content_left {
-    max-width: 350px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    font-size: 14px;
-    padding: 5px 0 0 10px;
-    align-items: flex-start;
-  }
-
-  .chat_content {
-    padding: 5px 10px;
-
-    .pictrue {
-      img {
-        max-width: 100%;
-        max-height: 400px;
-      }
-    }
-
-    .file_name {
-      display: flex;
-      flex-direction: column;
-    }
-  }
-
-  .chat_content_left {
-    background-color: #fff;
-    border-radius: 5px;
-    position: relative;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 6px;
-      left: -8px;
-      border-top: 8px solid transparent;
-      border-bottom: 8px solid transparent;
-      border-right: 8px solid #fff;
-    }
-  }
-
-  .chat_content_right {
-    background-color: #9eea6a;
-    border-radius: 5px;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 6px;
-      right: -8px;
-      border-top: 8px solid transparent;
-      border-bottom: 8px solid transparent;
-      border-left: 8px solid #9eea6a;
-    }
-  }
-
-  .message_right {
-    display: flex;
-    justify-content: flex-end;
-    padding: 10px 0;
-  }
-
-  .name_content_right {
-    display: flex;
-    flex-direction: column;
-    font-size: 14px;
-    padding: 0px 10px 0 0;
-    align-items: flex-end;
-    max-width: 350px;
-  }
-
-  .input_box {
-    position: relative;
-    border-right: 1px solid #eee;
-    min-height: 220px;
-    background-color: #fff;
-
-    .other {
-      padding-bottom: 8px;
-    }
-
-    .send {
-      position: absolute;
-      top: 120px;
-      bottom: 10px;
-      right: 10px;
-      /deep/ .ant-checkbox + span {
-        padding-left: 0;
-        color: #ccc;
-      }
-      .send_btn {
-        display: inline-block;
-        width: 50px;
-        height: 30px;
-        text-align: center;
-        line-height: 30px;
-        background: #eee;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-
-      .activt_btn {
-        background-color: #1890ff;
-        color: #ffffff;
-      }
-    }
-  }
-}
-
-.loading {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 33;
-}
-
-.browBox {
-  width: 400px;
-  height: 200px;
-  background: #fff;
-  position: absolute;
-  top: -220px;
-  left: -90px;
-  overflow: auto;
-  box-shadow: 0px 0px 10px #ccc;
-  z-index: 2222;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-    /*高宽分别对应横竖滚动条的尺寸*/
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background: #d8d8d8;
-  }
-
-  ul {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 10px;
-
-    li {
-      width: 10%;
-      font-size: 20px;
-      list-style: none;
-      text-align: center;
-      cursor: pointer;
-    }
-  }
-}
-
-.mask {
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(156, 153, 153, 0.2);
-  z-index: 11;
-  position: fixed;
-  top: 0;
-  left: 0;
-}
-
-.Pc_record {
-  font-size: 14px;
-  width: 200px;
-  height: 180px;
-  position: absolute;
-  bottom: 190px;
-  left: 50%;
-  transform: translate(-50%, 0);
-  padding: 10px;
-  line-height: 22px;
-  border-radius: 5px;
-  background-color: rgba(0, 20, 35, 0.5);
-  color: #fff;
-  font-weight: 300;
-  text-align: center;
-  z-index: 5;
-
-  .Pc_btn {
-    display: flex;
-    justify-content: space-around;
-
-    span {
-      width: 45px;
-      height: 25px;
-      color: #000;
-      background-color: #fff;
-      border-radius: 5px;
-      margin-top: 10px;
-    }
-  }
-}
-
-.voice_mask {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.2);
-  height: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 2;
-}
-.click_head_portrait {
-  position: fixed;
-  background-color: #fff;
-  box-shadow: 0px 0px 5px 2px #eee;
-  color: #000;
-  font-size: 12px;
-  z-index: 11;
-  cursor: pointer;
-  p {
-    padding: 5px 10px;
-    border-bottom: 1px solid #eee;
-    &:hover {
-      background-color: #eee;
-      color: #1890ff;
-    }
-  }
-}
-.view_image {
-  height: 100%;
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 3333;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-.playIcon {
-  padding: 0px 8px 0 0px;
-  border-radius: 3px;
-  position: absolute;
-  top: 50%;
-  right: -35px;
-  transform: translateY(-50%);
-}
-.small {
-  width: 10px;
-  height: 10px;
-  border-style: solid;
-  border-top-color: transparent;
-  border-left-color: transparent;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-  box-sizing: border-box;
-  vertical-align: middle;
-  display: inline-block;
-  color: #a2a2a2;
-  // border-width: 1px;
-}
-
-.middle {
-  width: 24px;
-  height: 18px;
-  border-style: solid;
-  border-top-color: transparent;
-  border-left-color: transparent;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-  box-sizing: border-box;
-  vertical-align: middle;
-  display: inline-block;
-  margin-left: -22px;
-  animation: show2 3s ease-in-out infinite;
-  opacity: 1;
-  color: #a2a2a2;
-  // border-width: 1px;
-}
-@keyframes show2 {
-  0% {
-    opacity: 0;
-  }
-  30% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-.different {
-  transform: rotate(180deg);
-}
-.large {
-  width: 34px;
-  height: 28px;
-  border-style: solid;
-  border-top-color: transparent; //大专栏 纯css3配合vue实现微信语音播放效果;
-  border-left-color: transparent;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-  box-sizing: border-box;
-  vertical-align: middle;
-  display: inline-block;
-  margin-left: -32px;
-  animation: show3 3s ease-in-out infinite;
-  opacity: 1;
-  color: #a2a2a2;
-  // border-width: 1px;
-}
-@keyframes show3 {
-  0% {
-    opacity: 0;
-  }
-  60% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-.stopanimate {
-  -moz-animation-name: none;
-  -webkit-animation-name: none;
-  -ms-animation-name: none;
-  animation-name: none;
-}
-/deep/.ant-input {
-  border: none;
-}
-
-/deep/.ant-input:focus {
-  box-shadow: none;
-}
+@import '@/style/index.less';
+@import '@/style/chatBox.less';
 </style>

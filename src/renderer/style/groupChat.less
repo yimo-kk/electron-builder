@@ -1,0 +1,108 @@
+@import './common.less';
+.groupChat {
+  background-color: @white;
+  .full_height();
+}
+.list_loading {
+  text-align: center;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  margin-bottom: 20px;
+  padding: 30px 50px;
+  margin: 20px 0;
+}
+.activt_item {
+  background-color: #ccc;
+}
+.hover_item {
+  padding: 5px;
+  &:hover {
+    background-color: #d9d9d9;
+  }
+}
+.chat_content {
+  border-left: 1px solid @LightGray;
+  border-right: 1px solid @LightGray;
+  display: flex;
+  flex-direction: column;
+  .full_height();
+}
+.chat_left {
+  // padding: 10px;
+  .full_height();
+  background-color: @LightGray;
+  overflow: auto;
+  .scrollbar();
+}
+.more {
+  font-size: 25px;
+  margin-right: 10px;
+  color: #848484;
+  &:hover {
+    color: #444444;
+  }
+}
+.member_item {
+  background-color: #ccc;
+}
+.list_height {
+  max-height: 80vh !important;
+}
+.group_list {
+  min-height: 40vh;
+  max-height: 45vh;
+  overflow: auto;
+  .scrollbar();
+}
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  .group_list_item {
+    display: flex;
+    .headimg {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+    }
+  }
+  .group_list_item_username {
+    padding-left: 10px;
+  }
+}
+.info {
+  .title {
+    padding: 0 10px;
+    height: 35px;
+    background-color: @LightGray;
+    line-height: 35px;
+  }
+
+  .subTitle {
+    padding: 0 10px;
+    height: 35px;
+    line-height: 35px;
+
+    span {
+      margin-left: 20px;
+    }
+  }
+}
+.remark_content {
+  border: 1px solid @LightGray;
+  border-radius: 10px;
+  margin: 10px;
+}
+.is_stop_speak {
+  margin-left: 20px;
+  color: #ccc;
+}
+.other {
+  overflow: auto;
+  max-height: 130px;
+  .scrollbar();
+}
+/deep/ .ant-checkbox-group-item {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+}

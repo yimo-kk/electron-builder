@@ -1,6 +1,6 @@
 <template>
   <div class="groupChat">
-    <a-row style="height: 100%" v-if="$store.state.Socket.chatList.length">
+    <a-row class="full_height" v-if="$store.state.Socket.chatList.length">
       <a-col :span="5" class="chat_left">
         <div v-if="$store.state.Socket.chatList.length">
           <div
@@ -18,7 +18,7 @@
           <a-spin :spinning="list_loading"></a-spin>
         </div> -->
       </a-col>
-      <a-col :span="centerNum" style="height: 100%">
+      <a-col :span="centerNum" class="full_height">
         <div class="chat_content">
           <a-page-header
             style="background: #f5f5f5; border-bottom: 0.5px solid #efefef"
@@ -78,9 +78,15 @@
                           slot-scope="scope"
                           class="checkboxLabel"
                         >
-                          <div style="display: flex; alignitems: center">
+                          <div class="flex_up_down_center">
                             <div class="group_list_item">
-                              <img class="headimg" v-lazy="scope.headimg" alt />
+                              <img
+                                class="headimg"
+                                :data-index="scope.value"
+                                @contextmenu.prevent="updateInfo"
+                                v-lazy="scope.headimg"
+                                alt
+                              />
                               <a-badge
                                 :status="
                                   activityGroup.is_invite == 0
@@ -243,14 +249,50 @@
         :auto-size="{ minRows: 2, maxRows: 6 }"
       />
     </a-modal>
+    <!-- 修改成员信息 -->
+    <div
+      v-show="isHeadPortrait"
+      class="click_head_portrait"
+      :style="{ left: left + 'px', top: top + 'px' }"
+    >
+      <p
+        @click="
+          () => {
+            isEditNickName = true
+          }
+        "
+      >
+        {{ $t('updateNickName') }}
+      </p>
+    </div>
+
+    <a-modal
+      v-dialogDrag
+      :title="$t('updateNickName')"
+      v-model="isEditNickName"
+      @ok="ensure"
+      :okText="$t('determine')"
+      :cancelText="$t('cancel')"
+    >
+      <editMemberInfo
+        :updateUser="updateUser"
+        @newNickName="
+          (val) => {
+            newName = val
+          }
+        "
+      ></editMemberInfo>
+    </a-modal>
   </div>
 </template>
 
 <script>
+const { remote } = require('electron')
 import ListItem from '@/components/chatBox/listItem'
 import ChatBox from '@/components/chatBox/chatBox'
 import addGroupList from './component/addGroupList'
 import memberList from './component/memberList'
+import editMemberInfo from './component/editMemberInfo'
 import common from '@/mixins/common'
 import { mapMutations, mapActions } from 'vuex'
 import {
@@ -267,14 +309,16 @@ import {
   getNotGroupUsersList,
   pullUsersGroup,
 } from '@/api/group.js'
+import chat from '@/mixins/chat'
 export default {
   name: 'GroupChat',
-  mixins: [common()],
+  mixins: [common(), chat()],
   components: {
     ListItem,
     ChatBox,
     memberList,
     addGroupList,
+    editMemberInfo,
   },
   data() {
     return {
@@ -299,6 +343,12 @@ export default {
       isAddBlack: false,
       blackRemark: '',
       blackdata: null,
+      isHeadPortrait: false,
+      left: null, //鼠标右键点击得位置
+      top: null,
+      isEditNickName: false, // 修改昵称弹框
+      updateUser: {},
+      newName: '',
     }
   },
   computed: {
@@ -998,158 +1048,46 @@ export default {
         }
       })
     },
+    updateInfo(e) {
+      if (
+        !this.groupList[e.target.dataset.index].kefu_code ||
+        !this.groupList[e.target.dataset.index].type
+      ) {
+        this.isHeadPortrait = true
+        this.left = e.pageX
+        this.top = e.pageY
+        this.updateUser = this.groupList[e.target.dataset.index]
+      }
+    },
+    ensure() {
+      if (!this.newName) {
+        this.$message.error(this.$t('inputName'))
+        return
+      }
+      this.isEditNickName = false
+      this.getGroupMemberList({
+        group_id: this.activityGroup.activityId,
+        seller_code: this.userInfo.seller_code,
+      })
+    },
+    contextmenuE() {
+      var m = remote.Menu.buildFromTemplate(rigthTemplate)
+      window.addEventListener('contextmenu', function(e) {
+        //阻止当前窗口默认事件
+        e.preventDefault()
+        //把菜单模板添加到右键菜单
+        m.popup({ window: remote.getCurrentWindow() })
+      })
+    },
   },
   mounted() {
+    this.menuNotClick()
     this.initGroup()
   },
 }
 </script>
 
 <style lang="less" scoped>
-.groupChat {
-  background-color: #fff;
-  height: 100%;
-}
-
-.list_loading {
-  text-align: center;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  margin-bottom: 20px;
-  padding: 30px 50px;
-  margin: 20px 0;
-}
-
-.activt_item {
-  background-color: #ccc;
-}
-
-.hover_item {
-  padding: 5px;
-  &:hover {
-    background-color: #d9d9d9;
-  }
-}
-
-.chat_content {
-  border-left: 1px solid #eee;
-  border-right: 1px solid #eee;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.chat_left {
-  // padding: 10px;
-  height: 100%;
-  background-color: #eee;
-  overflow: auto;
-
-  &::-webkit-scrollbar {
-    width: 8px;
-    /*高宽分别对应横竖滚动条的尺寸*/
-    // background-color: #fff;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background: #d8d8d8;
-  }
-}
-
-.more {
-  font-size: 25px;
-  margin-right: 10px;
-  color: #848484;
-  &:hover {
-    color: #444444;
-  }
-}
-
-.member_item {
-  background-color: #ccc;
-}
-/deep/ .ant-checkbox-group-item {
-  display: flex;
-  align-items: center;
-  padding: 5px;
-}
-.list_height {
-  max-height: 80vh !important;
-}
-.group_list {
-  min-height: 40vh;
-  max-height: 45vh;
-  overflow: auto;
-  &::-webkit-scrollbar {
-    width: 8px;
-    /*高宽分别对应横竖滚动条的尺寸*/
-    // background-color: #fff;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background: #d8d8d8;
-  }
-}
-.checkboxLabel {
-  display: flex;
-  align-items: center;
-  .group_list_item {
-    display: flex;
-    .headimg {
-      width: 30px;
-      height: 30px;
-      border-radius: 4px;
-    }
-  }
-  .group_list_item_username {
-    padding-left: 10px;
-  }
-}
-.info {
-  .title {
-    padding: 0 10px;
-    height: 35px;
-    background-color: #eee;
-    line-height: 35px;
-  }
-
-  .subTitle {
-    padding: 0 10px;
-    height: 35px;
-    line-height: 35px;
-
-    span {
-      margin-left: 20px;
-    }
-  }
-}
-
-.remark_content {
-  border: 1px solid #eee;
-  border-radius: 10px;
-  margin: 10px;
-}
-.is_stop_speak {
-  margin-left: 20px;
-  color: #ccc;
-}
-.other {
-  overflow: auto;
-  max-height: 130px;
-  &::-webkit-scrollbar {
-    width: 8px;
-    /*高宽分别对应横竖滚动条的尺寸*/
-    // background-color: #fff;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background: #d8d8d8;
-  }
-}
+@import '@/style/index.less';
+@import '@/style/groupChat.less';
 </style>

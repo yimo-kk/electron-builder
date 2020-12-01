@@ -76,7 +76,6 @@
 
 <script>
 import dayjs from 'dayjs'
-import { updateLeaveMsg } from '@/api/message.js'
 import { mapActions, mapMutations } from 'vuex'
 const columns = [
   {
@@ -206,40 +205,6 @@ export default {
       this.id = null
       this.oldSelectStatus = null
       this.$message.success(this.$t('message.editSuccess'))
-      // this.getMessageList({
-      //   seller_code: this.userInfo.seller_code,
-      // })
-      // let num = JSON.parse(
-      //   JSON.stringify(this.$store.state.message.untreatedNum)
-      // )
-      // num--
-      // this.SET_UNTREATED_NUM(num)
-      // updateLeaveMsg({
-      //   id: this.id,
-      //   status: this.selectStatus,
-      //   remarks: this.remark,
-      //   seller_code: this.userInfo.seller_code,
-      //   kefu_id:this.userInfo.kefu_id
-      // })
-      //   .then((result) => {
-      //     if (result.code === 0) {
-      //       this.visible = false;
-      //       this.selectStatus = 0;
-      //       this.remark = "";
-      //       this.id = null;
-      //       this.oldSelectStatus = null;
-      //       this.$message.success(this.$t("message.editSuccess"));
-      //       this.getMessageList({
-      //         seller_code: this.userInfo.seller_code,
-      //       });
-      //       let num = JSON.parse(JSON.stringify(this.$store.state.message.untreatedNum))
-      //       num--
-      //       this.SET_UNTREATED_NUM(num)
-      //     }
-      //   })
-      //   .catch((err) => {
-      //     console.log(err);
-      //   });
     },
     handleCancel() {
       this.visible = false
@@ -253,8 +218,6 @@ export default {
       this.visible = true
     },
   },
-  created() {},
-  mounted() {},
 }
 </script>
 <style lang="less" scoped>

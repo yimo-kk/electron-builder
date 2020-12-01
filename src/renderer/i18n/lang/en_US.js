@@ -1,4 +1,6 @@
 export default {
+  updateNickName: 'Change username',
+  inputName: 'Please enter a new nickname!',
   getOutApp: 'This operation key exits the program, do you want to continue?',
   textToSpeech: 'Text-to-speech',
   playErr: 'Play failed!',

@@ -206,9 +206,9 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import '@/style/common.less';
 .await_list {
   overflow: auto;
-  // background-color: #fff;
   .handle {
     display: flex;
     justify-content: space-between;
@@ -223,18 +223,7 @@ export default {
   .tabl_list {
     padding: 0 50px;
   }
-
-  &::-webkit-scrollbar {
-    width: 4px;
-    /*高宽分别对应横竖滚动条的尺寸*/
-    // background-color: #fff;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background: #d8d8d8;
-  }
+  .scrollbar();
 }
 
 .refresh_btn {

@@ -1,5 +1,5 @@
 <template>
-  <div class="serviceHeader">
+  <div class="serviceHeader flex_up_down_center">
     <div v-if="Object.keys(userInfo).length > 0" class="flex_up_down_center">
       <div>
         <a-badge
@@ -10,7 +10,7 @@
               ? 'warning'
               : 'default'
           "
-          style="display: flex;"
+          class="flex"
           :offset="[0, 25]"
           :title="
             kefuStatus == 1
@@ -58,7 +58,7 @@
         </a-dropdown>
       </div>
     </div>
-    <div class="language">
+    <div class="language flex">
       <span @click="changeLocale(localeval === 'zh' ? 'en' : 'zh')">{{
         localeval == 'zh' ? 'English' : '中文'
       }}</span>
@@ -170,8 +170,6 @@ export default {
   color: #fff;
   margin-right: -30px;
   padding-top: 10px;
-  display: flex;
-  align-items: center;
   .login_state {
     margin: 0 5px;
     padding-top: 10px;
@@ -181,7 +179,6 @@ export default {
     padding-top: 10px;
   }
   .language {
-    display: flex;
     padding-right: 10px;
     margin-right: -20px;
     span {

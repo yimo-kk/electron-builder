@@ -101,7 +101,6 @@ const mutations = {
   },
   //待接入离开了
   SOCKET_userDel: (state, data) => {
-    console.log(data, 3333)
     let arr = deleteListValue(state.awaitList, 'customer_id', data.uid)
     state.awaitList = arr
   },

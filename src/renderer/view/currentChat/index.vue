@@ -6,8 +6,8 @@
     >
       <a-spin></a-spin>
     </div>
-    <div v-if="currentChatList.length && !loading" style="height:100%">
-      <a-row style="height:100%">
+    <div v-if="currentChatList.length && !loading" class="full_height">
+      <a-row class="full_height">
         <a-col :span="5" class="chat_left">
           <div
             v-for="(item, index) in currentChatList"
@@ -31,7 +31,7 @@
             </div>
           </div>
         </a-col>
-        <a-col :span="centerNum" style="height:100%">
+        <a-col :span="centerNum" class="full_height">
           <div class="chat_content">
             <a-page-header
               style="background:#f5f5f5;border-bottom: .5px solid #efefef"
@@ -58,6 +58,7 @@
               :isMore="isMore"
               :count="count"
               @getLog="getLog"
+              @textToSpeech="textToSpeech"
             ></ChatBox>
           </div>
         </a-col>
@@ -242,6 +243,7 @@ export default {
       page: 1,
       count: 0,
       isMore: false,
+      isTextToSpeech: false,
     }
   },
   computed: {
@@ -532,14 +534,10 @@ export default {
         type: type,
       }
       let sendMessage = JSON.parse(JSON.stringify(my_send))
-      type === 0 && (sendMessage.message = conversion(my_send.message))
-      // type === 3 && (my_send.message.play = false);
-      // if(type === 2) {
-      //       my_send.progress = false
-      //       my_send.progress_num = 0
-      //     }
-      // my_send.create_time = dayjs().format('YYYY-MM-DD HH:mm:ss')
-      // this.currentChatLogList.push(my_send);
+      if (type === 0) {
+        sendMessage.message = conversion(my_send.message)
+        sendMessage.is_voice = this.isTextToSpeech ? 1 : 0
+      }
       this.$socket.emit('message', sendMessage)
     },
     uploadImage(file, type) {
@@ -672,6 +670,9 @@ export default {
         }
       )
     },
+    textToSpeech(val) {
+      this.isTextToSpeech = val
+    },
   },
   mounted() {
     let oldArr = JSON.parse(JSON.stringify(this.currentChatList))
@@ -689,127 +690,5 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.current_chat {
-  height: 100%;
-
-  background-color: #fff;
-}
-
-.groupChat {
-  background-color: #fff;
-  height: 100%;
-}
-
-.activt_item {
-  background-color: #ccc;
-}
-
-.chat_content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.chat_left {
-  height: 100%;
-  overflow: auto;
-  background-color: #eee;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-    /*高宽分别对应横竖滚动条的尺寸*/
-    // background-color: #fff;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background: #d8d8d8;
-  }
-}
-
-.more {
-  font-size: 25px;
-  margin-right: 10px;
-  color: #848484;
-  &:hover {
-    color: #444444;
-  }
-}
-.question_list {
-  height: calc(100vh - 170px);
-  overflow: auto;
-  &::-webkit-scrollbar {
-    width: 4px;
-    /*高宽分别对应横竖滚动条的尺寸*/
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background: #d8d8d8;
-  }
-}
-.question {
-  line-height: 20px;
-  border-radius: 3px;
-  padding: 5px;
-  max-width: 100%;
-
-  cursor: pointer;
-  &:hover {
-    color: #fff;
-    background-color: #1890ff;
-  }
-}
-
-.send_question {
-  width: 40px;
-  height: 25px;
-  text-align: center;
-  line-height: 25px;
-  border-radius: 3px;
-  background-color: #eee;
-  border-left: 1px solid #eee;
-  margin-top: 10px;
-  cursor: pointer;
-
-  &:hover {
-    color: #fff;
-    background-color: #1890ff;
-  }
-}
-.menu_close {
-  position: fixed;
-  background-color: #fff;
-  box-shadow: 0px 0px 4px 1px #ccc;
-  color: #000;
-  font-size: 12px;
-  // text-align: center;
-  z-index: 11;
-
-  cursor: pointer;
-  p {
-    padding: 5px 10px;
-    border-bottom: 1px solid #ccc;
-    &:hover {
-      background-color: #eee;
-      color: #1890ff;
-    }
-  }
-}
-.search {
-  margin-bottom: 5px;
-  border: 1px solid #eee;
-}
-.not_available {
-  font-size: 12px;
-  text-align: center;
-  margin-top: 10px;
-}
-.current_list {
-  &:hover {
-    background-color: #d9d9d9;
-  }
-}
+@import '@/style/currentChat.less';
 </style>

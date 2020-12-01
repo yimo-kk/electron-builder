@@ -15,7 +15,7 @@
               <div class="flex_center">
                 <customIcon
                   type="icon-liaotian"
-                  style="color:#fff;fontSize:18px"
+                  class="icon_style"
                 ></customIcon>
                 <p>{{ $t('topTitle.currentChat') }}</p>
                 <a-badge
@@ -28,10 +28,7 @@
             </a-menu-item>
             <a-menu-item key="AwaitChat">
               <div class="flex_center">
-                <customIcon
-                  type="icon-dengdai"
-                  style="color:#fff;fontSize:18px"
-                ></customIcon>
+                <customIcon type="icon-dengdai" class="icon_style"></customIcon>
                 <p>{{ $t('topTitle.awaitChat') }}</p>
                 <a-badge
                   :count="awaitList.length"
@@ -45,7 +42,7 @@
               <div class="flex_center">
                 <customIcon
                   type="icon--qunliaoshezhi"
-                  style="color:#fff;fontSize:18px"
+                  class="icon_style"
                 ></customIcon>
                 <p>{{ $t('topTitle.groupChat') }}</p>
                 <a-badge
@@ -58,7 +55,7 @@
             </a-menu-item>
             <a-menu-item key="Message">
               <div class="flex_center">
-                <a-icon type="audit" style="color:#fff;fontSize:18px" />
+                <a-icon type="audit" class="icon_style" />
                 <p>{{ $t('topTitle.leaveMessage') }}</p>
                 <a-badge
                   :count="$store.state.message.untreatedNum"
@@ -415,6 +412,10 @@ export default {
 </script>
 
 <style lang="less" scoped>
+.icon_style {
+  color: #fff;
+  font-size: 18px;
+}
 .header {
   display: flex;
   justify-content: space-between;

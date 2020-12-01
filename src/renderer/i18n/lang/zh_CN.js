@@ -1,4 +1,6 @@
 export default {
+  updateNickName: '修改昵称',
+  inputName: '请输入新昵称!',
   getOutApp: '此操作键退出程序,是否继续?',
   textToSpeech: '文字转语音',
   playErr: '播放失败！',

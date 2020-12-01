@@ -1,0 +1,18 @@
+@import './common.less';
+.click_head_portrait {
+  position: fixed;
+  background-color:@white;
+  box-shadow: 0px 0px 5px 2px @LightGray;
+  color: #000;
+  font-size: 12px;
+  z-index: 11;
+  .pointer();
+  p {
+    padding: 5px 10px;
+    border-bottom: 1px solid @LightGray;
+    &:hover {
+      background-color: @LightGray;
+      color: #1890ff;
+    }
+  }
+}

@@ -1,10 +1,14 @@
 <template>
   <div class="add_group_list">
-     <div style="width:200px;paddingBottom:10px">
-      <a-input-search :placeholder="$t('awaitInfo.search')" enter-button @search="onSearch" />
+    <div style="width:200px;paddingBottom:10px">
+      <a-input-search
+        :placeholder="$t('awaitInfo.search')"
+        enter-button
+        @search="onSearch"
+      />
     </div>
     <div v-if="isNotGroupList" style="textAlign: center">
-      <a-spin tip='加载中...' />
+      <a-spin tip="加载中..." />
     </div>
     <a-checkbox-group
       v-else
@@ -39,18 +43,18 @@
 
 <script>
 export default {
-  name: "AddGroupList",
+  name: 'AddGroupList',
   props: {
     selectAddlist: {
       type: Array,
       default() {
-        return [];
+        return []
       },
     },
     addGroupList: {
       type: Array,
       default() {
-        return [];
+        return []
       },
     },
     isNotGroupList: Boolean,
@@ -59,43 +63,35 @@ export default {
   data() {
     return {
       addlist: [],
-    };
+    }
   },
   watch: {
     isAddGroup(newVal) {
       if (!newVal) {
-        this.addlist = [];
+        this.addlist = []
       }
     },
   },
   methods: {
     onChangeAddList(vals) {
-      this.$emit("onChangeAddList", vals);
+      this.$emit('onChangeAddList', vals)
     },
     onChangeCheckbox(vals) {
-      this.$emit("onChangeCheckbox", vals);
+      this.$emit('onChangeCheckbox', vals)
     },
-    onSearch(val){
-      this.$emit('addSearch',val)
-    }
+    onSearch(val) {
+      this.$emit('addSearch', val)
+    },
   },
-};
+}
 </script>
-<style lang='less' scoped>
+<style lang="less" scoped>
+@import '@/style/common.less';
 .add_group_list {
   position: relative;
   max-height: 250px;
   overflow: auto;
-  &::-webkit-scrollbar {
-    width: 4px;
-    /*高宽分别对应横竖滚动条的尺寸*/
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background: #d8d8d8;
-  }
+  .scrollbar();
 }
 .add_group_label {
   .add_group_list_item {
@@ -106,7 +102,7 @@ export default {
     }
   }
 }
-.add_group_list_item_username{
+.add_group_list_item_username {
   font-size: 12px;
   max-width: 100px;
 }

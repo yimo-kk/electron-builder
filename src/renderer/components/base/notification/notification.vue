@@ -7,68 +7,68 @@
       leave-active-class="animated zoomOut"
     >
       <div
-        class="message-box"
-        v-for="(notice) in notices"
+        class="message-box flex"
+        v-for="notice in notices"
         :key="notice.name"
         @click="remove(notice.name)"
       >
         <a-icon :type="notice.icon" class="notice-icon" v-if="notice.icon" />
-        <span class="notice-text">{{notice.content}}</span>
+        <span class="notice-text">{{ notice.content }}</span>
       </div>
     </transition-group>
   </div>
 </template>
 
 <script>
-import { duration } from "moment";
-let seed = 0;
-const now = Date.now();
+import { duration } from 'moment'
+let seed = 0
+const now = Date.now()
 function getUuid() {
-  return "ZNotification_" + now + "_" + seed++;
+  return 'ZNotification_' + now + '_' + seed++
 }
 export default {
   data() {
     return {
       notices: [],
       duration: 1,
-    };
+    }
   },
   methods: {
     create(notice) {
-      const name = notice.name || getUuid();
-      let _notice;
-      if (typeof notice === "string") {
+      const name = notice.name || getUuid()
+      let _notice
+      if (typeof notice === 'string') {
         _notice = {
           content: notice,
           name,
-        };
+        }
       } else {
         _notice = Object.assign(
           {
-            content: "",
+            content: '',
             name,
           },
           notice
-        );
+        )
       }
 
-      this.notices.push(_notice);
-      let duration = notice.duration ? notice.duration : this.duration;
+      this.notices.push(_notice)
+      let duration = notice.duration ? notice.duration : this.duration
       setTimeout(() => {
-        this.remove(name);
-      }, duration * 1000);
+        this.remove(name)
+      }, duration * 1000)
     },
     remove(name) {
-      const notices = this.notices;
+      const notices = this.notices
       for (let i = 0; i < notices.length; i++) {
         if (notices[i].name === name) {
-          this.notices.splice(i, 1);
-          break;
+          this.notices.splice(i, 1)
+          break
         }
       }
     },
   },
-};
+}
 </script>
 
 <style lang="less" scoped>
@@ -109,7 +109,7 @@ export default {
 }
 .zoomOut {
   animation-name: zoomOut;
-  animation-duration: .5s;
+  animation-duration: 0.5s;
 }
 .animated {
   animation-fill-mode: both;
@@ -119,8 +119,6 @@ export default {
   top: 50%;
   left: 50%;
   z-index: 5000;
-  display: flex;
-  // flex-direction: column;
   align-items: center;
   justify-content: center;
   max-width: 80%;
