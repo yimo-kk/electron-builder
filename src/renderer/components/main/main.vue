@@ -426,11 +426,11 @@ export default {
   height: 100%;
 }
 /deep/.ant-badge-count {
-  min-width: 16px;
-  height: 16px;
-  padding: 0 5px;
-  font-size: 10px;
-  line-height: 16px;
+  min-width: 12px;
+  height: 12px;
+  padding: 0 4px;
+  font-size: 9px;
+  line-height: 12px;
 }
 /deep/ .ant-badge-dot {
   width: 10px;

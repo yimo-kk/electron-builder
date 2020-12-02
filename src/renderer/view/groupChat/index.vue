@@ -114,7 +114,7 @@
                                     `${
                                       scope.isAdmin ? $t('groupInfo.admin') : ''
                                     }`
-                                  : scope.nickname[userInfo.seller_code]
+                                  : scope.nickname
                               }}
                               <customIcon
                                 v-if="scope.forbid"
@@ -266,8 +266,8 @@
         {{ $t('updateNickName') }}
       </p>
     </div>
-
     <a-modal
+      ref="updateNickName"
       v-dialogDrag
       :title="$t('updateNickName')"
       v-model="isEditNickName"
@@ -276,6 +276,7 @@
       :cancelText="$t('cancel')"
     >
       <editMemberInfo
+        v-if="isEditNickName"
         :updateUser="updateUser"
         @newNickName="
           (val) => {
@@ -425,7 +426,7 @@ export default {
         let arr = JSON.parse(JSON.stringify(newVal))
         arr.forEach((item, index) => {
           item.value = ++this.groupList.length
-          item.nickname = eval('(' + item.nickname + ')')
+          // item.nickname = eval('(' + item.nickname + ')')
         })
         this.groupList.push(...arr)
       },
@@ -554,13 +555,14 @@ export default {
           forbid: newVal.state == 2 ? 'forbid' : '',
           message: newVal.message,
         })
-        this.groupList.forEach((item) => {
+        this.groupList = this.groupList.map((item) => {
           if (
             this.activityGroup.activityId == newVal.group_id &&
             item.uid === newVal.uid
           ) {
-            item.nickname[newVal.seller_code] = newVal.nickname
+            item.nickname = newVal.nickname
           }
+          return item
         })
       },
       deep: true,
@@ -686,11 +688,11 @@ export default {
         .then((result) => {
           this.isGroupList = false
           if (result.code === 0) {
-            result.data.forEach((item, index) => {
+            this.groupList = result.data.map((item, index) => {
               item.value = index
-              item.nickname = eval('(' + item.nickname + ')')
+              // item.nickname = eval('(' + item.nickname + ')')
+              return item
             })
-            this.groupList = result.data
           }
         })
         .catch((err) => {
@@ -1096,10 +1098,6 @@ export default {
         group_id: this.activityGroup.activityId,
       })
       this.isEditNickName = false
-      // this.getGroupMemberList({
-      //   group_id: this.activityGroup.activityId,
-      //   seller_code: this.userInfo.seller_code,
-      // })
     },
     contextmenuE() {
       var m = remote.Menu.buildFromTemplate(rigthTemplate)

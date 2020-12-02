@@ -43,7 +43,7 @@
               />
               <div class="name_content_left">
                 <span v-if="isName" style="marginBottom: 2px; fontSize: 12px">{{
-                  item.from_name
+                  item.state == 1 ? item.from_name : item.nickname
                 }}</span>
                 <div class="chat_content chat_content_left">
                   <div v-if="item.type === 0" class="flex">

@@ -67,7 +67,7 @@ export default {
         _this.percentage = percent
       } else if ('error' == arg.cmd) {
         _this.visible = false
-        _this.$message(this.$t('updateFailed'))
+        _this.$message.error(_this.$t('updateFailed'))
       }
     })
 

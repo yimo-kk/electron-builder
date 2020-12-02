@@ -63,7 +63,7 @@
           </a-input-password>
         </a-form-item>
         <a-form-item :wrapper-col="{ span: 17, offset: 4 }">
-          <a-button type="primary" html-type="submit" class="full_height">
+          <a-button type="primary" html-type="submit" style="width:100%">
             {{ $t('login.logIn') }}</a-button
           >
           <a-checkbox
@@ -289,5 +289,6 @@ export default {
 /deep/ .ant-checkbox-wrapper {
   display: flex;
   align-items: center;
+  width: 6rem;
 }
 </style>
