@@ -106,14 +106,15 @@
                               >
                               </a-badge>
                             </div>
-                            <p
-                              class="group_list_item_username"
-                              :title="scope.username"
-                            >
+
+                            <p class="group_list_item_username">
                               {{
-                                `${scope.username}${
-                                  scope.isAdmin ? $t('groupInfo.admin') : ''
-                                }`
+                                scope.type
+                                  ? scope.username +
+                                    `${
+                                      scope.isAdmin ? $t('groupInfo.admin') : ''
+                                    }`
+                                  : scope.nickname[userInfo.seller_code]
                               }}
                               <customIcon
                                 v-if="scope.forbid"
@@ -388,6 +389,9 @@ export default {
     kefuLeave() {
       return this.$store.state.Socket.kefuLeave
     },
+    saveNickname() {
+      return this.$store.state.Socket.saveNickname
+    },
     userInfo() {
       return JSON.parse(localStorage.getItem(this.$route.query.seller_code))[
         this.$route.query.kefu_code
@@ -421,6 +425,7 @@ export default {
         let arr = JSON.parse(JSON.stringify(newVal))
         arr.forEach((item, index) => {
           item.value = ++this.groupList.length
+          item.nickname = eval('(' + item.nickname + ')')
         })
         this.groupList.push(...arr)
       },
@@ -543,6 +548,23 @@ export default {
       },
       deep: true,
     },
+    saveNickname: {
+      handler(newVal) {
+        this.chatLogList.push({
+          forbid: newVal.state == 2 ? 'forbid' : '',
+          message: newVal.message,
+        })
+        this.groupList.forEach((item) => {
+          if (
+            this.activityGroup.activityId == newVal.group_id &&
+            item.uid === newVal.uid
+          ) {
+            item.nickname[newVal.seller_code] = newVal.nickname
+          }
+        })
+      },
+      deep: true,
+    },
   },
   methods: {
     ...mapMutations(['SET_CHAT_LIST', 'SET_ACTIVITY_GROUP']),
@@ -627,8 +649,6 @@ export default {
       getGroupChatLog(data)
         .then((result) => {
           this.count = result.count
-          // this.on_file =result.group.on_file?result.group.on_file:0
-          // this.on_voice=result.group.on_voice?result.group.on_voice:0
           this.isAdmin = result.isAdmin
           let array = result.data.map((item) => {
             if (item.type == 0) {
@@ -668,6 +688,7 @@ export default {
           if (result.code === 0) {
             result.data.forEach((item, index) => {
               item.value = index
+              item.nickname = eval('(' + item.nickname + ')')
             })
             this.groupList = result.data
           }
@@ -1064,11 +1085,21 @@ export default {
         this.$message.error(this.$t('inputName'))
         return
       }
-      this.isEditNickName = false
-      this.getGroupMemberList({
-        group_id: this.activityGroup.activityId,
+      this.$socket.emit('message', {
+        cmd: 'saveNickname',
+        uid: this.updateUser.uid,
+        nickname: this.newName,
+        oldNickname: this.updateUser.nickname[this.userInfo.seller_code],
+        kefu_name: this.userInfo.kefu_name,
+        username: this.updateUser.username,
         seller_code: this.userInfo.seller_code,
+        group_id: this.activityGroup.activityId,
       })
+      this.isEditNickName = false
+      // this.getGroupMemberList({
+      //   group_id: this.activityGroup.activityId,
+      //   seller_code: this.userInfo.seller_code,
+      // })
     },
     contextmenuE() {
       var m = remote.Menu.buildFromTemplate(rigthTemplate)

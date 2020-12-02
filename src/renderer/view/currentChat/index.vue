@@ -356,13 +356,15 @@ export default {
     // 当选中聊天人就拉相应的聊天记录
     currentUser: {
       handler(newVal) {
-        this.page = 1
-        this.getUserChatLog({
-          page: 1,
-          username: newVal.activtyeUsername,
-          kefu_code: this.userInfo.kefu_code,
-          kefu_id: this.userInfo.kefu_id,
-        })
+        if (newVal.activtyUid && newVal.activtyeUsername) {
+          this.page = 1
+          this.getUserChatLog({
+            page: 1,
+            username: newVal.activtyeUsername,
+            kefu_code: this.userInfo.kefu_code,
+            kefu_id: this.userInfo.kefu_id,
+          })
+        }
       },
       deep: true,
     },

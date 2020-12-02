@@ -4,7 +4,7 @@
       <p class="padding">头像:</p>
       <img class="avatar padding" :src="updateUser.headimg" alt="" />
       <p class="nickName padding">昵称:</p>
-      <p>{{ updateUser.username }}</p>
+      <p>{{ updateUser.nickname[userInfo.seller_code] }}</p>
     </div>
     <a-input
       v-model="name"
@@ -25,7 +25,13 @@ export default {
       },
     },
   },
-  components: {},
+  computed: {
+    userInfo() {
+      return JSON.parse(localStorage.getItem(this.$route.query.seller_code))[
+        this.$route.query.kefu_code
+      ]
+    },
+  },
   data() {
     return {
       name: '',
@@ -36,7 +42,9 @@ export default {
       this.$emit('newNickName', this.name)
     },
   },
-  mounted() {},
+  mounted() {
+    this.name = ''
+  },
 }
 </script>
 <style lang="less" scoped>

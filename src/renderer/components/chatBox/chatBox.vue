@@ -26,7 +26,9 @@
           <div class="flex_center" style="color:#ccc; fontSize:12px">
             <p>{{ isViewDate(index) ? item.create_time : '' }}</p>
           </div>
-          <div v-if="item.forbid" class="forbid">{{ item.message }}</div>
+          <div v-if="item.forbid || item.state == 2" class="forbid">
+            {{ item.message || item.content }}
+          </div>
           <div v-else>
             <div
               class="message_left"

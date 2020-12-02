@@ -39,6 +39,7 @@ const state = {
   kefuLeave: {}, // 客服离开
   kefuOnline: {}, // 客服上线
   pullUsersGroup: [], // 拉人进群
+  saveNickname: {}, // 修改群成员昵称
 
 }
 const getters = {
@@ -68,6 +69,10 @@ const mutations = {
   // reconnect:重新连接socket事件
   SOCKET_reconnect: (data) => {
     // console.log('重连')
+  },
+  // 客服修改群成员昵称
+  SOCKET_saveNickname: (state, data) => {
+    state.saveNickname = data
   },
   // 客服被删除
   SOCKET_delKefu: (state, data) => {
