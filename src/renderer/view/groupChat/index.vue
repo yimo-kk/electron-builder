@@ -78,12 +78,14 @@
                           slot-scope="scope"
                           class="checkboxLabel"
                         >
-                          <div class="flex_up_down_center">
+                          <div
+                            class="flex_up_down_center"
+                            @contextmenu.prevent="updateInfo"
+                          >
                             <div class="group_list_item">
                               <img
                                 class="headimg"
                                 :data-index="scope.value"
-                                @contextmenu.prevent="updateInfo"
                                 v-lazy="scope.headimg"
                                 alt
                               />
@@ -107,7 +109,10 @@
                               </a-badge>
                             </div>
 
-                            <p class="group_list_item_username">
+                            <p
+                              class="group_list_item_username"
+                              :data-index="scope.value"
+                            >
                               {{
                                 scope.type
                                   ? scope.username +
@@ -1072,6 +1077,7 @@ export default {
       })
     },
     updateInfo(e) {
+      if (!e.target.dataset.index) return
       if (
         !this.groupList[e.target.dataset.index].kefu_code ||
         !this.groupList[e.target.dataset.index].type
