@@ -170,7 +170,7 @@ export default {
         seller_code: this.userInfo.seller_code,
         kefu_code: this.userInfo.kefu_code,
       })
-      this.reload()
+      // this.reload()
       this.setStatus(1)
     },
     error() {

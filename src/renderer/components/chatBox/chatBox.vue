@@ -836,7 +836,6 @@ export default {
           this.chatLogListData[obj.index].progress_num = parseInt(
             (obj.progress_num * 100).toFixed(0)
           )
-          console.log(this.chatLogListData[obj.index].progress_num)
         }
       })
       this.$electron.ipcRenderer.on('downloadSuccess', (e, val) => {
@@ -862,28 +861,29 @@ export default {
       this.previewImage = ''
     },
     changeImageSize() {
+      this.$refs.viewImage.addEventListener('wheel', this.changeImg, false)
+    },
+    changeImg(e) {
       let el = this.$refs.imageShow
-      this.$refs.viewImage.addEventListener('wheel', (e) => {
-        let delta = e.wheelDelta && (e.wheelDelta > 0 ? 1 : -1)
-        if (delta > 0) {
-          //放大
-          // 向上滚
-          let oWidth = el.offsetWidth //取得图片的实际宽度
-          let oHeight = el.offsetHeight //取得图片的实际高度
-          el.style.width = oWidth + 50 + 'px'
-          el.style.height = oHeight + (50 / oWidth) * oHeight + 'px'
-        } else if (delta < 0) {
-          //缩小
-          //向下滚
-          let oWidth = el.offsetWidth //取得图片的实际宽度
-          let oHeight = el.offsetHeight //取得图片的实际高度
-          if (el.offsetWidth > 100 || el.offsetHeight > 75) {
-            //判断如果图片缩小到原图大小就停止缩小(100和75分别为原图的宽高)
-            el.style.width = oWidth - 50 + 'px'
-            el.style.height = oHeight - (50 / oWidth) * oHeight + 'px'
-          }
+      let delta = e.wheelDelta && (e.wheelDelta > 0 ? 1 : -1)
+      if (delta > 0) {
+        //放大
+        // 向上滚
+        let oWidth = el.offsetWidth //取得图片的实际宽度
+        let oHeight = el.offsetHeight //取得图片的实际高度
+        el.style.width = oWidth + 50 + 'px'
+        el.style.height = oHeight + (50 / oWidth) * oHeight + 'px'
+      } else if (delta < 0) {
+        //缩小
+        //向下滚
+        let oWidth = el.offsetWidth //取得图片的实际宽度
+        let oHeight = el.offsetHeight //取得图片的实际高度
+        if (el.offsetWidth > 100 || el.offsetHeight > 75) {
+          //判断如果图片缩小到原图大小就停止缩小(100和75分别为原图的宽高)
+          el.style.width = oWidth - 50 + 'px'
+          el.style.height = oHeight - (50 / oWidth) * oHeight + 'px'
         }
-      })
+      }
     },
     logMore() {
       // 滚动到顶部 加载更多
@@ -948,6 +948,9 @@ export default {
     this.logMore()
     this.downloadProcess()
     this.changeImageSize()
+  },
+  destroyed() {
+    // this.$refs.viewImage.removeEventListener('wheel', this.changeImg, false)
   },
 }
 </script>

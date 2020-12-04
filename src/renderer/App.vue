@@ -71,44 +71,35 @@ export default {
       }
     })
 
+    // 点击叉叉隐藏到托盘
+    this.$electron.ipcRenderer.on('before_hide', () => {
+      this.$electron.ipcRenderer.send('app-hide')
+    })
     // 退出程序事件
     this.$electron.ipcRenderer.on('before_closed', () => {
       let that = this
-      // 退出
-      // this.$confirm({
-      //   title: this.$t('prompt'),
-      //   content: this.$t('getOutApp'),
-      //   okText: this.$t('determine'),
-      //   cancelText: this.$t('cancel'),
-      //   onOk: DebounceBy(() => {
       let { kefu_code, seller_code } = that.$route.query
-      try {
+      if (kefu_code && seller_code) {
+        let userInfo = JSON.parse(
+          localStorage.getItem(that.$route.query.seller_code)
+        )[that.$route.query.kefu_code]
+        that.$socket.emit('message', {
+          cmd: 'service-status',
+          kefu_code: userInfo.kefu_code,
+          kefu_id: userInfo.kefu_id,
+          seller_code: userInfo.seller_code,
+          username: userInfo.kefu_name,
+          headimg: userInfo.kefu_avatar,
+          online_status: 0,
+        })
         let info = JSON.parse(localStorage.getItem(seller_code))
         delete info[kefu_code]
         localStorage.setItem(seller_code, JSON.stringify(info))
-      } finally {
-        that.$router.push({ name: 'Login' })
-        that.$store.commit('SET_USER_INFO', '')
-        that.$store.commit('RESETVUEX')
-        that.$electron.ipcRenderer.send('app-exit')
-        if (that.$route.query.seller_code && that.$route.query.kefu_code) {
-          let userInfo = JSON.parse(
-            localStorage.getItem(that.$route.query.seller_code)
-          )[that.$route.query.kefu_code]
-          that.$socket.emit('message', {
-            cmd: 'service-status',
-            kefu_code: userInfo.kefu_code,
-            kefu_id: userInfo.kefu_id,
-            seller_code: userInfo.seller_code,
-            username: userInfo.kefu_name,
-            headimg: userInfo.kefu_avatar,
-            online_status: 0,
-          })
-        }
       }
-      // }, 200),
-      // onCancel() {},
-      // })
+      that.$router.push({ name: 'Login' })
+      that.$store.commit('SET_USER_INFO', '')
+      that.$store.commit('RESETVUEX')
+      this.$electron.ipcRenderer.send('app-closed')
     })
   },
   methods: {

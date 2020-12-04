@@ -1,6 +1,6 @@
 {
   "name": "service",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "author": "yimo <386169080@qq.com>",
   "description": "An electron-vue project",
   "license": null,

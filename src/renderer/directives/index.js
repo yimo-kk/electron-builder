@@ -49,10 +49,6 @@ Vue.directive('dialogDrag', {
   bind (el, binding, vnode, oldVnode) {
     const dialogHeaderEl = el.querySelector('.ant-modal-header');
     const dragDom = el.querySelector('.ant-modal');
-    const dragTitleDom = el.querySelector('.ant-modal-title');
-    dragTitleDom.addEventListener('selectstart', () => {
-      return false
-    }, false)
     dialogHeaderEl.style.cssText += ';cursor:move;'
     // dragTitleDom.style.cssText += ';-moz-user-select:none;'
     // dragDom.style.cssText += ';top:0px;'

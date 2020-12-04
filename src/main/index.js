@@ -58,7 +58,7 @@ function createWindow () {
   mainWindow.setMenu(null);
   mainWindow.on("close", (event) => {
     event.preventDefault();
-    mainWindow.webContents.send("before_closed");
+    mainWindow.webContents.send("before_hide");
   });
   // 任务栏的闪烁
   ipcMain.on("message_prompt", () => {
@@ -87,7 +87,11 @@ function createWindow () {
       mainWindow.webContents.send("show_tab", data.tab);
     });
   });
-  ipcMain.on("app-exit", () => {
+  // 隐藏应用到托盘
+  ipcMain.on("app-hide", () => {
+    mainWindow.hide();
+  });
+  ipcMain.on("app-closed", () => {
     // 所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
     app.exit();
   });
@@ -105,7 +109,6 @@ function createWindow () {
       event.newGuest.setMenu(null);
     }
   })
-
   let folderPath = ''
   let foldername = ''
   let downloadIndex = null
@@ -152,9 +155,7 @@ function createWindow () {
       }
     })
   })
-
 }
-
 // 设置托盘
 function implementSystemTray () {
   let timer = null,
