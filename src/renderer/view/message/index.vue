@@ -46,6 +46,10 @@
     >
       <div>
         <div class="flex status">
+          <p class="title">留言类容:</p>
+          <p>{{ messageContent }}</p>
+        </div>
+        <div class="flex status">
           <p class="title">{{ $t('message.status') }}</p>
           <a-radio-group
             name="radioGroup"
@@ -156,6 +160,7 @@ export default {
       remark: '',
       id: null,
       updateTime: null,
+      messageContent: '',
     }
   },
   filters: {
@@ -210,6 +215,7 @@ export default {
       this.visible = false
     },
     edit(val) {
+      this.messageContent = val.content
       this.updateTime = val.update_time
       this.remark = val.remarks
       this.selectStatus = val.status

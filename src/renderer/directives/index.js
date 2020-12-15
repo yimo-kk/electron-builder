@@ -97,7 +97,6 @@ Vue.directive('dialogDrag', {
         // 通过事件委托，计算移动的距离
         let left = e.clientX - disX;
         let top = e.clientY - disY;
-        console.log(left, top)
         // 边界处理
         if (-(left) > minDragDomLeft) {
           left = -(minDragDomLeft);
@@ -112,7 +111,7 @@ Vue.directive('dialogDrag', {
         }
         // 移动当前元素 
         dragDom.style.cssText += `;left:${left + styL}px;top:${top + styT}px;`;
-        console.log(dragDom.style.cssText)
+
       };
 
       document.onmouseup = function (e) {

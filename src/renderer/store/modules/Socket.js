@@ -1,3 +1,4 @@
+// import electron from 'electron'
 import { getGroupList } from "@/api/group.js";
 import { isArr, deleteListValue } from "@/utils/libs.js";
 import Toast from '@/components/Toast/toast'
@@ -19,6 +20,7 @@ const state = {
     on_voice: 0,
     img: ''
   },
+  chatTime: 0, // 聊天信息是否每条显示时间
   userMessage: {}, // 客服收到用户消息
   relinkMessage: {}, // 客服收到转接消息
   refuseMessage: {}, // 转接是否被接受
@@ -40,7 +42,6 @@ const state = {
   kefuOnline: {}, // 客服上线
   pullUsersGroup: [], // 拉人进群
   saveNickname: {}, // 修改群成员昵称
-
 }
 const getters = {
   currentNum (state) {
@@ -238,6 +239,7 @@ const mutations = {
         area: data.area
       }
     }
+    // electron.ipcRenderer.send('message_prompt')
     state.oldUser = data
     !isArr(state.currentChatList, 'username', data.username) && state.currentChatList.push(data)
   },
@@ -267,6 +269,9 @@ const mutations = {
       area: data.area
     },
       !isArr(state.currentChatList, 'username', data.username) && state.currentChatList.push(data)
+  },
+  SET_CHAT_TIME (state, data) {
+    state.chatTime = data
   },
   RESETVUEX (state) {
     state.currentUser.activtyUid = null

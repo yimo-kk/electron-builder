@@ -58,6 +58,7 @@
               :isMore="isMore"
               :count="count"
               @getLog="getLog"
+              v-model="text"
               @textToSpeech="textToSpeech"
             ></ChatBox>
           </div>
@@ -127,7 +128,7 @@
                               </template>
                               <p
                                 class="question dwote"
-                                @click="sendMessage(val.word, 0)"
+                                @click="speedySennd(val.word)"
                               >
                                 {{ val.word }}
                               </p>
@@ -244,6 +245,7 @@ export default {
       count: 0,
       isMore: false,
       isTextToSpeech: false,
+      text: '',
     }
   },
   computed: {
@@ -368,6 +370,7 @@ export default {
       },
       deep: true,
     },
+    
   },
   methods: {
     ...mapActions(['getCurrentListData']),
@@ -494,12 +497,13 @@ export default {
                 from_avatar: that.userInfo.kefu_avatar,
                 from_name: that.userInfo.kefu_name,
                 kefu_code: that.userInfo.kefu_code,
+                kefu_id: that.userInfo.kefu_id,
                 seller_code: that.userInfo.seller_code,
                 username: userNmae,
                 cmd: 'service-score',
               }
               that.$socket.emit('message', params)
-              that.$message.success('删除成功！')
+              that.$message.success(that.$t('deleteSuccess'))
               that.close = false
               that.SET_CURRENT_USER({
                 activtyUid: null,
@@ -541,6 +545,7 @@ export default {
         sendMessage.is_voice = this.isTextToSpeech ? 1 : 0
       }
       this.$socket.emit('message', sendMessage)
+      this.text = ''
     },
     uploadImage(file, type) {
       if (!isImage(file.file.type)) {
@@ -652,7 +657,9 @@ export default {
     },
     speedySennd(val) {
       this.searchKeyword = ''
-      ;(this.isSearchList = false), this.sendMessage(val, 0)
+      this.isSearchList = false
+      // this.sendMessage(val, 0)
+      this.text = val
     },
     getLog(e, fn) {
       this.isMore = true

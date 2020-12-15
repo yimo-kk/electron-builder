@@ -1,4 +1,16 @@
 export default {
+  day: '天',
+  hour: '小时',
+  minute: '分钟',
+  permanent: '永久',
+  pleaseSelect: '请选择',
+  pleaseInput: '请输入',
+  time: '时间',
+  theReason: '原因！',
+  addBlackStartTime: '拉黑开始时间',
+  addBlackEndTime: '拉黑结束时间',
+  addBlackTime: '拉黑时间：',
+  deleteSuccess: '删除成功！',
   updateNickName: '修改昵称',
   inputName: '请输入新昵称!',
   getOutApp: '此操作键退出程序,是否继续?',
@@ -117,7 +129,7 @@ export default {
     pull: '拉人进群',
     AddGroupMembers: '添加群成员',
     noGroupMembers: '暂无群成员...',
-    addBlackRemark: '拉黑备注（理由）',
+    addBlackRemark: '拉黑备注(理由)',
     reason: '请输入拉黑原因'
   },
   login: {

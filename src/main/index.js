@@ -8,7 +8,6 @@ import {
   Notification,
 } from "electron";
 import path from "path";
-// import { autoUpdater } from 'electron-updater'
 import { updateHandle } from './update'
 const feedUrl = 'https://user.nikidigital.net/'
 /**
@@ -66,27 +65,7 @@ function createWindow () {
       mainWindow.flashFrame(true);
     }
   });
-  ipcMain.on("isVisible_box", (event, data) => {
-    notification = new Notification({
-      // 通知的标题, 将在通知窗口的顶部显示
-      title: "妮姬客服",
-      // 通知的副标题, 显示在标题下面 macOS
-      subtitle: "",
-      // 通知的正文文本, 将显示在标题或副标题下面
-      body: data.msg,
-      // false有声音，true没声音
-      silent: true,
-      icon: path.join(__static, "./logo.png"),
-      timeoutType: "default",
-    });
-    if (!mainWindow.isFocused()) {
-      notification.show();
-    }
-    notification.on("click", () => {
-      mainWindow.show();
-      mainWindow.webContents.send("show_tab", data.tab);
-    });
-  });
+
   // 隐藏应用到托盘
   ipcMain.on("app-hide", () => {
     mainWindow.hide();
@@ -112,8 +91,8 @@ function createWindow () {
   let folderPath = ''
   let foldername = ''
   let downloadIndex = null
-  ipcMain.on('download', (evt, { url, downloadFolder, index, name }) => {
-    downloadIndex = index
+  ipcMain.on('download', (evt, { url, downloadFolder, name, index }) => {
+    index && (downloadIndex = index)
     foldername = name
     folderPath = downloadFolder;
     mainWindow.webContents.downloadURL(url);
@@ -134,7 +113,7 @@ function createWindow () {
         } else {
           // 下载中 
           try {
-            mainWindow.webContents.send("progress", { index: downloadIndex, progress_num: item.getReceivedBytes() / item.getTotalBytes() });
+            downloadIndex && mainWindow.webContents.send("progress", { index: downloadIndex, progress_num: item.getReceivedBytes() / item.getTotalBytes() });
           } catch (error) {
             console.log(error)
           }
@@ -146,10 +125,6 @@ function createWindow () {
         // 下载成功
         mainWindow.webContents.send("downloadSuccess", 'success');
       }
-      //  else if(state === 'interrupted'){
-      //   console.log('err')
-      //   mainWindow.webContents.send("downloadSuccess",'error');
-      // }
       else {
         mainWindow.webContents.send("downloadSuccess", 'error');
       }

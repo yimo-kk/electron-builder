@@ -14,9 +14,6 @@
             <ListItem :groupData="item" @selectGroup="selectGroup"></ListItem>
           </div>
         </div>
-        <!-- <div v-else class="list_loading">
-          <a-spin :spinning="list_loading"></a-spin>
-        </div> -->
       </a-col>
       <a-col :span="centerNum" class="full_height">
         <div class="chat_content">
@@ -243,17 +240,58 @@
       ></addGroupList>
     </a-modal>
     <a-modal
-      :title="$t('groupInfo.addBlackRemark')"
+      :title="isStopSpeak ? '禁言备注' : $t('groupInfo.addBlackRemark')"
       v-model="isAddBlack"
+      width="550px"
       @ok="handleAddBlack"
+      @cancel="handleCancel"
       :okText="$t('determine')"
       :cancelText="$t('cancel')"
     >
-      <a-textarea
-        :placeholder="$t('groupInfo.reason')"
-        v-model="blackRemark"
-        :auto-size="{ minRows: 2, maxRows: 6 }"
-      />
+      <div class="flex_up_down_center time_style">
+        <p class="remark_and_time">
+          {{ isStopSpeak ? '禁言时间：' : $t('addBlackTime') }}
+        </p>
+        <addBalckTime
+          :day="day"
+          :hour="hour"
+          :minute="minute"
+          :permanentTime="permanent"
+          @onChangeDay="
+            (value) => {
+              day = value
+            }
+          "
+          @onChangeHour="
+            (value) => {
+              hour = value
+            }
+          "
+          @onChangeMinute="
+            (value) => {
+              minute = value
+            }
+          "
+          @permanent="
+            (value) => {
+              permanent = value
+            }
+          "
+        ></addBalckTime>
+      </div>
+      <div class="flex_up_down_center">
+        <p class="remark_and_time">
+          {{
+            isStopSpeak ? '禁言备注：' : `${$t('groupInfo.addBlackRemark')}:`
+          }}
+        </p>
+        <a-textarea
+          :placeholder="isStopSpeak ? '请输入禁言原因' : $t('groupInfo.reason')"
+          v-model="blackRemark"
+          :auto-size="{ minRows: 2, maxRows: 5 }"
+          style="width: 70%;"
+        />
+      </div>
     </a-modal>
     <!-- 修改成员信息 -->
     <div
@@ -294,12 +332,14 @@
 </template>
 
 <script>
+import moment from 'moment'
 const { remote } = require('electron')
 import ListItem from '@/components/chatBox/listItem'
 import ChatBox from '@/components/chatBox/chatBox'
 import addGroupList from './component/addGroupList'
 import memberList from './component/memberList'
 import editMemberInfo from './component/editMemberInfo'
+import addBalckTime from './component/addBalckTime'
 import common from '@/mixins/common'
 import { mapMutations, mapActions } from 'vuex'
 import {
@@ -326,9 +366,11 @@ export default {
     memberList,
     addGroupList,
     editMemberInfo,
+    addBalckTime,
   },
   data() {
     return {
+      addBalckTime: [],
       checkedList: [],
       isGroupList: false,
       isMore: false,
@@ -356,6 +398,12 @@ export default {
       isEditNickName: false, // 修改昵称弹框
       updateUser: {},
       newName: '',
+      isStopSpeak: false,
+      stopSpeakData: null,
+      day: null,
+      hour: null,
+      minute: null,
+      permanent: false,
     }
   },
   computed: {
@@ -576,6 +624,7 @@ export default {
   methods: {
     ...mapMutations(['SET_CHAT_LIST', 'SET_ACTIVITY_GROUP']),
     ...mapActions(['getGroupList']),
+    moment,
     sendMessage(content, type) {
       if (!content.length && type === 0) return
       let my_send = {
@@ -636,6 +685,7 @@ export default {
         img: data.group_avatar,
       })
       this.chatLogList = []
+      this.checkedList = []
       this.page = 1
       if (this.$store.state.Socket.chatList.length) {
         let chatList = this.arrayExists(
@@ -754,18 +804,23 @@ export default {
         onCancel() {},
       })
     },
-    //禁言
-    stopSpeak(arr) {
-      this.$socket.emit('message', {
-        cmd: 'forbid',
-        seller_code: this.userInfo.seller_code,
-        group_id: this.activityGroup.activityId,
-        username: arr,
-        from_name: this.userInfo.kefu_name,
-      })
-      this.handleGroupUser = []
-      this.checkedList = []
+    stopSpeak(data) {
+      this.isStopSpeak = true
+      this.isAddBlack = true
+      this.stopSpeakData = data
     },
+    //禁言
+    // stopSpeak(arr) {
+    //   this.$socket.emit('message', {
+    //     cmd: 'forbid',
+    //     seller_code: this.userInfo.seller_code,
+    //     group_id: this.activityGroup.activityId,
+    //     username: arr,
+    //     from_name: this.userInfo.kefu_name,
+    //   })
+    //   this.handleGroupUser = []
+    //   this.checkedList = []
+    // },
     // 批量解禁
     removeforbid() {
       if (this.handleGroupUser.length <= 0) {
@@ -840,21 +895,71 @@ export default {
       })
     },
     handleAddBlack() {
-      let params = {
-        cmd: 'black',
-        remarks: this.blackRemark,
-        oper_kefu_id: this.userInfo.kefu_id,
-        seller_code: this.userInfo.seller_code,
-        group_id: this.activityGroup.activityId,
-        users: this.blackdata,
-        from_name: this.userInfo.kefu_name,
+      if (!this.day && !this.hour && !this.minute && !this.permanent) {
+        this.$message.error(
+          `${this.$t('pleaseSelect')} ${
+            this.isStopSpeak
+              ? this.$t('groupInfo.mute')
+              : this.$t('groupInfo.blocked')
+          } ${this.$t('time')} `
+        )
+        return
       }
-      this.$socket.emit('message', params)
-      this.handleGroupUser = []
+      if (!this.blackRemark) {
+        this.$message.error(
+          `${this.$t('pleaseInput')} ${
+            this.isStopSpeak
+              ? this.$t('groupInfo.mute')
+              : this.$t('groupInfo.blocked')
+          } ${this.$t('theReason')}`
+        )
+        return
+      }
+      if (this.isStopSpeak) {
+        this.$socket.emit('message', {
+          cmd: 'forbid',
+          seller_code: this.userInfo.seller_code,
+          group_id: this.activityGroup.activityId,
+          username: this.stopSpeakData,
+          from_name: this.userInfo.kefu_name,
+        })
+        this.handleGroupUser = []
+        this.checkedList = []
+        this.stopSpeakData = null
+        this.isStopSpeak = false
+        this.isAddBlack = false
+      } else {
+        let params = {
+          cmd: 'black',
+          type: this.permanent ? 1 : 0,
+          day: this.day ? this.day : 0,
+          hour: this.hour ? this.hour : 0,
+          minute: this.minute ? this.minute : 0,
+          remarks: this.blackRemark,
+          oper_kefu_id: this.userInfo.kefu_id,
+          seller_code: this.userInfo.seller_code,
+          group_id: this.activityGroup.activityId,
+          users: this.blackdata,
+          from_name: this.userInfo.kefu_name,
+        }
+        this.$socket.emit('message', params)
+        this.handleGroupUser = []
+        this.blackRemark = ''
+        this.blackdata = null
+        this.isAddBlack = false
+        this.checkedList = []
+      }
+      this.day = null
+      this.hour = null
+      this.minute = null
+      this.permanent = false
+    },
+    handleCancel() {
+      this.day = null
+      this.hour = null
+      this.minute = null
+      this.permanent = false
       this.blackRemark = ''
-      this.blackdata = null
-      this.isAddBlack = false
-      this.checkedList = []
     },
     addBlacklist(data) {
       this.isAddBlack = true

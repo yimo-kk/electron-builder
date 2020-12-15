@@ -24,7 +24,15 @@
         </p>
         <div v-for="(item, index) in chatLogListData" :key="index">
           <div class="flex_center" style="color:#ccc; fontSize:12px">
-            <p>{{ isViewDate(index) ? item.create_time : '' }}</p>
+            <p>
+              {{
+                $store.state.Socket.chatTime
+                  ? item.create_time
+                  : isViewDate(index)
+                  ? item.create_time
+                  : ''
+              }}
+            </p>
           </div>
           <div v-if="item.forbid || item.state == 2" class="forbid">
             {{ item.message || item.content }}
@@ -42,9 +50,11 @@
                 @contextmenu.prevent="handleRightImg"
               />
               <div class="name_content_left">
-                <span v-if="isName" style="marginBottom: 2px; fontSize: 12px">{{
-                  item.state == 1 ? item.from_name : item.nickname
-                }}</span>
+                <span
+                  v-if="isName"
+                  style="marginBottom: 2px; fontSize: 12px;color:#ccc;"
+                  >{{ item.state == 1 ? item.from_name : item.nickname }}</span
+                >
                 <div class="chat_content chat_content_left">
                   <div v-if="item.type === 0" class="flex">
                     <p style="word-break: break-word;">
@@ -54,6 +64,7 @@
 
                   <div v-else-if="item.type === 1" class="pictrue">
                     <img
+                      @contextmenu="downloadImg(item.content || item.message)"
                       @click="viewImg(item.content || item.message)"
                       @load="loadImg"
                       :src="item.content || item.message"
@@ -124,15 +135,18 @@
               v-else-if="item.from_name === userInfo.kefu_name"
             >
               <div class="name_content_right">
-                <span v-if="isName" style="marginBottom: 2px; fontSize: 12px">{{
-                  userInfo.kefu_name
-                }}</span>
+                <span
+                  v-if="isName"
+                  style="marginBottom: 2px; fontSize: 12px;color:#ccc"
+                  >{{ userInfo.kefu_name }}</span
+                >
                 <div class="chat_content chat_content_right">
                   <p style=";word-break: break-word;" v-if="item.type === 0">
                     {{ item.content || item.message }}
                   </p>
                   <div v-else-if="item.type === 1" class="pictrue">
                     <img
+                      @contextmenu="downloadImg(item.content || item.message)"
                       @load="loadImg"
                       @click="viewImg(item.content || item.message)"
                       :src="item.content || item.message"
@@ -249,6 +263,7 @@
           v-model.trim="sendText"
           :placeholder="$t('currentInfo.pleaseEnter')"
           style="height:75px"
+          @input="inputText"
           @keydown="enter"
         />
         <div class="send">
@@ -329,6 +344,7 @@ Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
             color: #ccc;"
       ></customIcon>
       <img
+        @contextmenu="downloadImg(previewImage)"
         alt="example"
         ref="imageShow"
         style="height:100%;padding:10px"
@@ -381,10 +397,48 @@ import Audio from './audio'
 // import IatRecorder from '@/utils/js/IatRecorder.js'
 // const iatRecorder = new IatRecorder('en_us')
 import chat from '@/mixins/chat'
+const electron = require('electron')
+const { remote } = require('electron')
+var imgUrl = ''
+var downloadImgtext = [
+  {
+    label: '保存图片',
+    click: (e, data) => {
+      let name = imgUrl.split('/')
+      let pathName = name[name.length - 1]
+      dialog.showSaveDialog(
+        {
+          //默认路径
+          defaultPath: `/download/${pathName}`,
+          buttonLabel: '保存',
+        },
+        (res) => {
+          if (!res) return
+          let downloadFolder = res
+          electron.ipcRenderer.send('download', {
+            url: imgUrl,
+            downloadFolder,
+            name: pathName.split('.')[0],
+          })
+        }
+      )
+    },
+  },
+]
+var downloadImgMenu = remote.Menu.buildFromTemplate(downloadImgtext)
 export default {
   name: 'ChatBox',
   mixins: [chat()],
+  model: {
+    prop: 'text',
+    event: 'inputText',
+  },
+
   props: {
+    text: {
+      type: String,
+      default: '',
+    },
     isName: {
       type: Boolean,
       default: true,
@@ -430,7 +484,7 @@ export default {
       loading: false,
       faceShow: false,
       faceList: [],
-      sendText: '',
+      sendText: JSON.parse(JSON.stringify(this.text)),
       sendType: 0,
       isVoice: false,
       drawRecordId: null,
@@ -442,7 +496,6 @@ export default {
       selectUser: {},
       timer: null,
       isDownload: false,
-      // ttsIndex: null,
     }
   },
   computed: {
@@ -457,7 +510,7 @@ export default {
           return (
             new Date(this.chatLogListData[index].create_time).getTime() -
               new Date(this.chatLogListData[index - 1].create_time).getTime() >
-            1000 * 60 * 5
+            1000 * 60 * 3
           )
         } else {
           return ''
@@ -465,6 +518,7 @@ export default {
       }
     },
   },
+
   watch: {
     'chatLogList.length': {
       handler(newVal, oldVal) {
@@ -497,15 +551,14 @@ export default {
         this.sendText = conversionFace(str)
       }
     },
-    // 'iatRecorder.status': {
-    //   handler(newVal) {
-    //     ;(newVal === 'endPlay' || newVal === 'errorTTS') &&
-    //       (this.ttsIndex = null)
-    //   },
-    //   deep: true,
-    // },
+    text(newVal) {
+      this.sendText = JSON.parse(JSON.stringify(newVal))
+    },
   },
   methods: {
+    inputText(val) {
+      this.$emit('inputText', val.target.value)
+    },
     enter(event) {
       if ((event.keyCode === 13 && event.ctrlKey) || event.altKey) {
         this.sendText += '\n'
@@ -693,25 +746,10 @@ export default {
       this.previewImage = val
       this.previewVisible = true
     },
-    // 下载文件
-    // downloadFile(content, fileName) {
-    //   try {
-    //     let aLink = document.createElement("a");
-    //     let evt = document.createEvent("HTMLEvents");
-    //     evt.initEvent("click", true, true); //initEvent 不加后两个参数在FF下会报错  事件类型，是否冒泡，是否阻止浏览器的默认行为
-    //     if (typeof content !== "string") {
-    //       aLink.href = content.src;
-    //       aLink.download = content.filename;
-    //     } else {
-    //       aLink.href = content;
-    //       aLink.download = fileName;
-    //     }
-    //     aLink.click();
-    //     // this.$message.success(this.$t('downloadFile'))
-    //   } catch (error) {
-    //     this.$message.error(this.$t('fileExpired'));
-    //   }
-    // },
+    downloadImg(url) {
+      downloadImgMenu.popup({ window: remote.getCurrentWindow() }, false)
+      imgUrl = url
+    },
     handleRightImg(e) {
       this.isHeadPortrait = true
       this.left = e.pageX + 10
@@ -799,9 +837,7 @@ export default {
       this.$emit('removeblack', params)
     },
     downloadFileE(content, name, index, bool) {
-      if (bool) {
-        return
-      }
+      if (bool) return
       this.isDownload = true
       let path = `/download/${name}`
       dialog.showSaveDialog(
@@ -839,6 +875,7 @@ export default {
         }
       })
       this.$electron.ipcRenderer.on('downloadSuccess', (e, val) => {
+        imgUrl = ''
         this.isDownload = false
         if (val === 'success') {
           this.$toast({

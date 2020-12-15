@@ -157,7 +157,7 @@ export default {
   sockets: {
     // connect:查看socket是否渲染成功
     connect() {
-      this.$socket.emit('Init', {
+      this.$socket.emit('init', {
         seller_code: this.userInfo.seller_code,
         kefu_code: this.userInfo.kefu_code,
       })
@@ -166,15 +166,31 @@ export default {
     disconnect(data) {},
     reconnect(data) {
       console.log('重连')
-      this.$socket.emit('Init', {
+      this.$socket.emit('init', {
         seller_code: this.userInfo.seller_code,
         kefu_code: this.userInfo.kefu_code,
       })
-      // this.reload()
       this.setStatus(1)
     },
     error() {
       this.$socket.close()
+    },
+    // 是否显示每条信息时间
+    chatTime(data) {
+      if (data.seller_code === this.userInfo.seller_code) {
+        let obj = {}
+        obj = this.userInfo
+        obj.chat_time = data.chat_time
+        let objAll = JSON.parse(
+          localStorage.getItem(this.$route.query.seller_code)
+        )
+        objAll[this.$route.query.kefu_code] = obj
+        localStorage.setItem(
+          this.$route.query.seller_code,
+          JSON.stringify(objAll)
+        )
+        this.SET_CHAT_TIME(data.chat_time)
+      }
     },
   },
   watch: {
@@ -229,10 +245,11 @@ export default {
         if (val.kefu_code == this.userInfo.kefu_code) {
           this.play()
           this.$electron.ipcRenderer.send('message_prompt')
-          this.$electron.ipcRenderer.send('isVisible_box', {
-            msg: val.message,
-            tab: 'CurrentChat',
-          })
+          // 暂时隐藏系统通知
+          // this.$electron.ipcRenderer.send('isVisible_box', {
+          //   msg: val.message,
+          //   tab: 'CurrentChat',
+          // })
           let that = this
           this.$confirm({
             title: this.$t('notification'),
@@ -288,10 +305,11 @@ export default {
           this.play()
           this.$electron.ipcRenderer.send('message_prompt')
           this.$electron.ipcRenderer.send('message_tray')
-          this.$electron.ipcRenderer.send('isVisible_box', {
-            msg: `${data.from_name}${this.$t('sendNewMessage')}`,
-            tab: 'CurrentChat',
-          })
+          // 暂时隐藏系统通知
+          // this.$electron.ipcRenderer.send('isVisible_box', {
+          //   msg: `${data.from_name}${this.$t('sendNewMessage')}`,
+          //   tab: 'CurrentChat',
+          // })
           if (
             this.selectedKey != 'CurrentChat' ||
             this.$store.state.Socket.currentUser.activtyeUsername !=
@@ -315,10 +333,11 @@ export default {
           this.play()
           this.$electron.ipcRenderer.send('message_prompt')
           this.$electron.ipcRenderer.send('message_tray')
-          this.$electron.ipcRenderer.send('isVisible_box', {
-            msg: this.$t('rogerThat'),
-            tab: 'GroupChat',
-          })
+          // 暂时隐藏系统通知
+          // this.$electron.ipcRenderer.send('isVisible_box', {
+          //   msg: this.$t('rogerThat'),
+          //   tab: 'GroupChat',
+          // })
         }
         if (
           this.$store.state.Socket.chatList.length &&
@@ -347,6 +366,7 @@ export default {
       'SET_GROUP_CHAT_NUM',
       'SET_STATUS',
       'SET_ACTIVITY_GROUP',
+      'SET_CHAT_TIME',
     ]),
     selectMenu(val) {
       this.selectedKey = val.key

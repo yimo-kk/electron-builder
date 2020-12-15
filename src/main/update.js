@@ -1,3 +1,4 @@
+
 import { autoUpdater } from 'electron-updater'
 import { ipcMain } from 'electron'
 let mainWindow = null;

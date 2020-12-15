@@ -16,6 +16,22 @@
           }"
           :percent="percentage"
         />
+        <a-steps
+          progress-dot
+          :current="1"
+          direction="vertical"
+          style="marginTop:10px"
+        >
+          <a-step title="更新内容"> </a-step>
+        </a-steps>
+        <div class="steps_content">
+          <ul>
+            <li>新增图片右键保存功能</li>
+            <li>修改快捷发送功能</li>
+            <li>新增拉黑禁言时间，时间过期自动解除</li>
+            <li>优化其他小功能体验</li>
+          </ul>
+        </div>
       </a-modal>
       <audio id="audio" preload="auto" loop>
         <source src="./assets/voice.mp3" type="audio/mp3" />
@@ -54,6 +70,7 @@ export default {
     document.ondragover = function(event) {
       return false
     }
+
     // 更新
     this.$electron.ipcRenderer.send('checkForUpdate')
     let _this = this
@@ -70,7 +87,6 @@ export default {
         _this.$message.error(_this.$t('updateFailed'))
       }
     })
-
     // 点击叉叉隐藏到托盘
     this.$electron.ipcRenderer.on('before_hide', () => {
       this.$electron.ipcRenderer.send('app-hide')
@@ -130,5 +146,13 @@ export default {
 .ant-menu-dark .ant-menu-sub {
   color: rgba(255, 255, 255, 0.65);
   background: #2a2b2d !important;
+}
+</style>
+<style lang="less" scoped>
+/deep/ .ant-steps-vertical .ant-steps-item-content {
+  min-height: 0 !important;
+}
+.steps_content {
+  padding-left: 30px;
 }
 </style>
