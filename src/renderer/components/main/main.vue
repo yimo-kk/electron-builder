@@ -223,7 +223,8 @@ export default {
             activtyeUsername: '',
             login_ip: '',
             area: '',
-            // level:0
+            level: 0,
+            is_relink: null,
           })
         } else if (!bool) {
           this.SET_CURRENT_USER({
@@ -231,7 +232,8 @@ export default {
             activtyeUsername: this.currentChatList[0].username,
             login_ip: this.currentChatList[0].login_ip,
             area: this.currentChatList[0].area,
-            // level: this.currentChatList[0].level,
+            level: this.currentChatList[0].level,
+            is_relink: this.currentChatList[0].is_relink,
           })
         }
       },

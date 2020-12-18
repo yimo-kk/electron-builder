@@ -20,10 +20,14 @@
 
     <div class="group_name" :data-index="index">
       <div :data-index="index" class="flex">
-        <p style="marginRight:5px">
+        <p style="marginRight:5px" :data-index="index">
           {{ groupData.group_name || groupData.username }}
         </p>
-        <level v-show="!isHeadImg" :num="parseInt(groupData.level)"></level>
+        <level
+          v-show="!isHeadImg"
+          :num="parseInt(groupData.level)"
+          :data-index="index"
+        ></level>
       </div>
 
       <p :data-index="index">

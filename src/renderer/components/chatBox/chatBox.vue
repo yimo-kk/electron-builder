@@ -3,7 +3,7 @@
     <div class="loading" v-show="loading">
       <a-spin></a-spin>
     </div>
-    <div class="chat_body">
+    <div class="chat_body" ref="chatBody">
       <div
         class="chat_all"
         :style="{
@@ -378,13 +378,22 @@ Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
         {{ $t('groupInfo.kickOut') }}
       </p>
     </div>
+    <popup
+      v-show="sendFilePopup"
+      :type="sendFileType"
+      :fileName="sendFileName"
+      :HeadImg="sendFiletoHead"
+      :sendToName="sendFiletoName"
+      @ensure="fileSendEnsure"
+      @cancel="fileSendCancel"
+    ></popup>
   </div>
 </template>
 
 <script>
 const { dialog } = require('electron').remote
 const path = require('path')
-import { conversionFace, conversion } from '@/utils/libs.js'
+import { conversionFace, conversion, isImage } from '@/utils/libs.js'
 import Recorder from 'js-audio-recorder'
 const recorder = new Recorder({
   sampleBits: 8, // 采样位数，支持 8 或 16，默认是16
@@ -397,6 +406,7 @@ import Audio from './audio'
 // import IatRecorder from '@/utils/js/IatRecorder.js'
 // const iatRecorder = new IatRecorder('en_us')
 import chat from '@/mixins/chat'
+import popup from '../popup/popup'
 const electron = require('electron')
 const { remote } = require('electron')
 var imgUrl = ''
@@ -477,6 +487,7 @@ export default {
   },
   components: {
     Audio,
+    popup,
   },
   data() {
     return {
@@ -496,6 +507,12 @@ export default {
       selectUser: {},
       timer: null,
       isDownload: false,
+      sendFilePopup: false,
+      sendFileType: 1,
+      sendFileName: '',
+      sendFiletoHead: '',
+      sendFiletoName: '',
+      currentsendData: null,
     }
   },
   computed: {
@@ -516,6 +533,9 @@ export default {
           return ''
         }
       }
+    },
+    currentUser() {
+      return this.$store.state.Socket.currentUser
     },
   },
 
@@ -578,13 +598,13 @@ export default {
       this.$emit('sendMessage', content, type)
       this.sendText = ''
     },
-    uploadImage(file) {
-      this.$emit('uploadImage', file, 1)
+    uploadImage(file, drag) {
+      this.$emit('uploadImage', drag ? file : file.file, 1)
     },
-    uploadFile(file) {
+    uploadFile(file, drag) {
       const formdata = new FormData()
-      formdata.append('filedata', file.file)
-      formdata.append('filename', file.file.name)
+      formdata.append('filedata', drag ? file : file.file)
+      formdata.append('filename', drag ? file.name : file.file.name)
       this.loading = true
       serviceSendChatFile(formdata)
         .then((result) => {
@@ -937,6 +957,39 @@ export default {
         }
       })
     },
+    dragIn() {
+      !this.isName &&
+        this.$refs.chatBody.addEventListener('drop', (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          this.currentsendData = e.dataTransfer.files[0]
+          this.sendFilePopup = true
+          this.sendFileType = this.isImageTo(this.currentsendData.type) ? 1 : 2
+          this.sendFileName = this.currentsendData.name
+          this.sendFiletoHead = ''
+          this.sendFiletoName = this.currentUser.activtyeUsername
+        })
+    },
+    fileSendEnsure() {
+      this.sendFilePopup = false
+      if (this.isImageTo(this.currentsendData.type)) {
+        this.uploadImage(this.currentsendData, 'drag')
+      } else {
+        this.uploadFile(this.currentsendData, 'drag')
+      }
+      this.sendFileType = 0
+      this.sendFileName = ''
+      this.sendFiletoHead = ''
+      this.sendFiletoName = ''
+    },
+    fileSendCancel() {
+      this.currentsendData = null
+      this.sendFilePopup = false
+      this.sendFileType = 0
+      this.sendFileName = ''
+      this.sendFiletoHead = ''
+      this.sendFiletoName = ''
+    },
     // menuNotClick() {
     //   // 下面这句代码是获取 点击的区域是否包含你的菜单，如果包含，说明点击的是菜单以外，不包含则为菜单以内
     //   document.addEventListener('click', (e) => {
@@ -978,6 +1031,10 @@ export default {
     textToSpeech(e) {
       this.$emit('textToSpeech', e.target.checked)
     },
+    isImageTo(str) {
+      var reg = /(png|jpg|gif|jpeg|webp)$/
+      return reg.test(str)
+    },
   },
   mounted() {
     // 将聊天框滚轮拉到最底部
@@ -986,6 +1043,7 @@ export default {
     this.logMore()
     this.downloadProcess()
     this.changeImageSize()
+    this.dragIn()
   },
   destroyed() {
     // this.$refs.viewImage.removeEventListener('wheel', this.changeImg, false)

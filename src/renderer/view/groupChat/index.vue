@@ -646,11 +646,11 @@ export default {
       this.$socket.emit('message', sendMessage)
     },
     uploadImage(file, type) {
-      if (!isImage(file.file.type)) {
+      if (!isImage(file.type)) {
         this.$toast(this.$t('selectImg'))
       } else {
         compressImage(
-          file.file,
+          file,
           (imgData) => {
             this.sendMessage(imgData, type)
           },

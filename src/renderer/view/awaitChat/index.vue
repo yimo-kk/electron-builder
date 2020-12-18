@@ -179,6 +179,7 @@ export default {
                 login_ip: data.customer_ip,
                 area: data.customer_area,
                 level: data.level,
+                is_relink: data.is_relink,
               })
 
               that.$emit('selectMenu', { key: 'CurrentChat' })

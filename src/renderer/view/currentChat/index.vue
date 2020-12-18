@@ -199,7 +199,6 @@ import ChatBox from '@/components/chatBox/chatBox'
 import CurrentOperation from './component/currentOperation'
 import Multitap from './component/multitap'
 import common from '@/mixins/common'
-// import levelLogo from '@/components/level.vue'
 import {
   getUserChatLog,
   closeChat,
@@ -222,7 +221,6 @@ export default {
     ChatBox,
     CurrentOperation,
     Multitap,
-    // levelLogo,
   },
   data() {
     return {
@@ -333,6 +331,8 @@ export default {
                 activtyeUsername: this.currentChatList[0].username,
                 login_ip: this.currentChatList[0].login_ip,
                 area: this.currentChatList[0].area,
+                level: this.currentChatList[0].level,
+                is_relink: this.currentChatList[0].is_relink,
               }
             } else {
               params = {
@@ -341,6 +341,7 @@ export default {
                 login_ip: '',
                 area: '',
                 level: 0,
+                is_relink: null,
               }
             }
             this.SET_CURRENT_USER(params)
@@ -371,6 +372,8 @@ export default {
             username: newVal.activtyeUsername,
             kefu_code: this.userInfo.kefu_code,
             kefu_id: this.userInfo.kefu_id,
+            is_relink: newVal.is_relink,
+            seller_code: this.userInfo.seller_code,
           })
         }
       },
@@ -405,6 +408,7 @@ export default {
         login_ip: data.login_ip,
         area: data.area,
         level: data.level,
+        is_relink: data.is_relink,
       })
     },
     getCurrentList() {
@@ -423,7 +427,8 @@ export default {
               activtyeUsername: this.currentChatList[0].username,
               login_ip: this.currentChatList[0].login_ip,
               area: this.currentChatList[0].area,
-              // level: this.currentChatList[0].level,
+              level: this.currentChatList[0].level,
+              is_relink: this.currentChatList[0].is_relink,
             })
           }
           this.getUserChatLog({
@@ -431,6 +436,8 @@ export default {
             username: this.currentUser.activtyeUsername,
             kefu_code: this.userInfo.kefu_code,
             kefu_id: this.userInfo.kefu_id,
+            is_relink: this.currentUser.is_relink,
+            seller_code: this.userInfo.seller_code,
           })
         } else {
           this.loading = false
@@ -522,6 +529,7 @@ export default {
                   login_ip: '',
                   area: '',
                   level: 0,
+                  is_relink: null,
                 })
               }
               that.getCurrentList()
@@ -561,11 +569,11 @@ export default {
       this.text = ''
     },
     uploadImage(file, type) {
-      if (!isImage(file.file.type)) {
+      if (!isImage(file.type)) {
         this.$toast(this.$t('selectImg'))
       } else {
         compressImage(
-          file.file,
+          file,
           (imgData) => {
             this.sendMessage(imgData, type)
           },
@@ -684,6 +692,8 @@ export default {
       let scrollH = this.$refs.chatBox.$refs.chatMain.scrollHeight
       this.getUserChatLog(
         {
+          is_relink: this.currentUser.is_relink,
+          seller_code: this.userInfo.seller_code,
           page: this.page,
           username: this.currentUser.activtyeUsername,
           kefu_code: this.userInfo.kefu_code,

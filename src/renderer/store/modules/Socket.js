@@ -9,9 +9,11 @@ const state = {
   currentUser: {
     activtyUid: null,
     activtyeUsername: "",
+    HeadImg: '',
     login_ip: '',
     area: '',
-    level: 0
+    level: 0,
+    is_relink: null
   },
   activityGroup: {
     activityId: null,
@@ -239,12 +241,13 @@ const mutations = {
       state.currentUser = {
         activtyUid: data.uid,
         activtyeUsername: data.username,
+
         login_ip: data.login_ip,
         area: data.area,
-        // level:data.level
+        level: data.level,
+        is_relink: data.is_relink,
       }
     }
-    // electron.ipcRenderer.send('message_prompt')
     state.oldUser = data
     !isArr(state.currentChatList, 'username', data.username) && state.currentChatList.push(data)
   },
@@ -272,7 +275,8 @@ const mutations = {
       activtyeUsername: data.username,
       login_ip: data.login_ip,
       area: data.area,
-      // level:data.level
+      level: data.level,
+      is_relink: data.is_relink,
     },
       !isArr(state.currentChatList, 'username', data.username) && state.currentChatList.push(data)
   },
@@ -285,7 +289,8 @@ const mutations = {
     state.currentUser.login_ip = ''
     state.currentUser.area = ''
     state.currentUser.level = 0
-    state.activityGroup.activityId = null
+    state.currentUser.is_relink = null,
+      state.activityGroup.activityId = null
     state.activityGroup.activityTitle = ""
     state.activityGroup.is_invite = null
     state.activityGroup.img = ''

@@ -31,6 +31,19 @@ export function isImage (str) {
   var reg = /\.(png|jpg|gif|jpeg|webp)$/;
   return !reg.test(str);
 }
+// export function isImage (str) {
+//   //判断是否是图片 - strFilter必须是小写列举
+//   var strFilter = ".jpeg|.gif|.jpg|.png|.bmp|.pic|.svg|"
+//   if (str.indexOf(".") > -1) {
+//     var p = str.lastIndexOf(".");
+//     var strPostfix = str.substring(p, str.length) + '|';
+//     strPostfix = strPostfix.toLowerCase();
+//     if (strFilter.indexOf(strPostfix) > -1) {
+//       return true;
+//     }
+//   }
+//   return false;
+// }
 // 压缩图片
 export function compressImage (file, success, error) {
   const name = file.name; //文件名
@@ -128,7 +141,6 @@ export function compare (property) {
   return function (a, b) {
     var value1 = parseInt(a[property]);
     var value2 = parseInt(b[property]);
-    console.log(value1, value2)
     return value2 - value1;
   }
 }
