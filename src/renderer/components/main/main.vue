@@ -166,11 +166,7 @@ export default {
     disconnect(data) {},
     reconnect(data) {
       console.log('重连')
-      this.$socket.emit('init', {
-        seller_code: this.userInfo.seller_code,
-        kefu_code: this.userInfo.kefu_code,
-      })
-      this.setStatus(1)
+      this.reconnect()
     },
     error() {
       this.$socket.close()
@@ -227,6 +223,7 @@ export default {
             activtyeUsername: '',
             login_ip: '',
             area: '',
+            // level:0
           })
         } else if (!bool) {
           this.SET_CURRENT_USER({
@@ -234,6 +231,7 @@ export default {
             activtyeUsername: this.currentChatList[0].username,
             login_ip: this.currentChatList[0].login_ip,
             area: this.currentChatList[0].area,
+            // level: this.currentChatList[0].level,
           })
         }
       },
@@ -278,6 +276,7 @@ export default {
                 uid: val.user_id,
                 kefu_code: that.userInfo.kefu_code,
                 from_kefu_code: val.from_kefu_code,
+                level: val.level,
               })
               that.selectedKey = 'CurrentChat'
             }, 800),
@@ -411,6 +410,13 @@ export default {
         headimg: this.userInfo.kefu_avatar,
         online_status: index,
       })
+    },
+    reconnect() {
+      this.$socket.emit('init', {
+        seller_code: this.userInfo.seller_code,
+        kefu_code: this.userInfo.kefu_code,
+      })
+      this.setStatus(1)
     },
   },
   mounted() {

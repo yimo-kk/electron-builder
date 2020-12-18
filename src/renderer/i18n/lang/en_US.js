@@ -107,7 +107,7 @@ export default {
       visitorName: 'Visitor name',
       visitorIp: 'Visitor ip',
       interviewTime: 'Interview time',
-      visitorType: 'Visitor type',
+      visitorType: 'User level',
       operating: 'Operating',
       Tourist: 'Tourist',
       user: 'User',

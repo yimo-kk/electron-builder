@@ -18,7 +18,7 @@
       <a-input-number
         :disabled="stop"
         :min="0"
-        :max="24"
+        :max="23"
         :stop="1"
         v-model.number="AddBalckHour"
         @change="onChangeHour"
@@ -32,7 +32,7 @@
       <a-input-number
         :disabled="stop"
         :min="0"
-        :max="60"
+        :max="59"
         :stop="1"
         v-model.number="AddBalckMinute"
         @change="onChangeMinute"
@@ -44,7 +44,7 @@
         {{ $t('minute') }}
       </span>
     </div>
-    <div>
+    <div v-if="ispermanent">
       <a-checkbox v-model="stop" @change="permanent">
         {{ $t('permanent') }}
       </a-checkbox>
@@ -72,6 +72,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    ispermanent: {
+      type: Boolean,
+      default: true,
+    },
   },
   data() {
     return {
@@ -83,13 +87,13 @@ export default {
   },
   watch: {
     day(newVal) {
-      this.AddBalckDay = newVal ? newVal : 0
+      this.AddBalckDay = newVal
     },
     hour(newVal) {
-      this.AddBalckHour = newVal ? newVal : 0
+      this.AddBalckHour = newVal
     },
     minute(newVal) {
-      this.AddBalckMinute = newVal ? newVal : 0
+      this.AddBalckMinute = newVal
     },
     permanentTime(newVal) {
       this.stop = newVal

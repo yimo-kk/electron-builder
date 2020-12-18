@@ -1,6 +1,6 @@
 // import electron from 'electron'
 import { getGroupList } from "@/api/group.js";
-import { isArr, deleteListValue } from "@/utils/libs.js";
+import { isArr, deleteListValue, compare } from "@/utils/libs.js";
 import Toast from '@/components/Toast/toast'
 import router from '@/router'
 import { getCustomerQueue } from "@/api/await.js";
@@ -10,7 +10,8 @@ const state = {
     activtyUid: null,
     activtyeUsername: "",
     login_ip: '',
-    area: ''
+    area: '',
+    level: 0
   },
   activityGroup: {
     activityId: null,
@@ -159,9 +160,12 @@ const mutations = {
     data.noReadNum = 0
     state.chatList.push(data)
   },
-  //新待接
+  //新待接待
   SOCKET_addQueue: (state, data) => {
-    state.awaitList.push(data)
+    let oldList = JSON.parse(JSON.stringify(state.awaitList))
+    oldList.push(data)
+    oldList.sort(compare('level'));
+    state.awaitList = oldList
   },
   // 收到拉黑全局提示
   SOCKET_groupBlack: (state, data) => {
@@ -236,7 +240,8 @@ const mutations = {
         activtyUid: data.uid,
         activtyeUsername: data.username,
         login_ip: data.login_ip,
-        area: data.area
+        area: data.area,
+        // level:data.level
       }
     }
     // electron.ipcRenderer.send('message_prompt')
@@ -266,7 +271,8 @@ const mutations = {
       activtyUid: data.uid,
       activtyeUsername: data.username,
       login_ip: data.login_ip,
-      area: data.area
+      area: data.area,
+      // level:data.level
     },
       !isArr(state.currentChatList, 'username', data.username) && state.currentChatList.push(data)
   },
@@ -278,6 +284,7 @@ const mutations = {
     state.currentUser.activtyeUsername = ""
     state.currentUser.login_ip = ''
     state.currentUser.area = ''
+    state.currentUser.level = 0
     state.activityGroup.activityId = null
     state.activityGroup.activityTitle = ""
     state.activityGroup.is_invite = null

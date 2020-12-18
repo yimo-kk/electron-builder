@@ -24,14 +24,15 @@
         >
           <a-step title="更新内容"> </a-step>
         </a-steps>
-        <div class="steps_content">
+        <!-- 当前版本更新日志 -->
+        <!-- <div class="steps_content">
           <ul>
             <li>新增图片右键保存功能</li>
             <li>修改快捷发送功能</li>
             <li>新增拉黑禁言时间，时间过期自动解除</li>
             <li>优化其他小功能体验</li>
           </ul>
-        </div>
+        </div> -->
       </a-modal>
       <audio id="audio" preload="auto" loop>
         <source src="./assets/voice.mp3" type="audio/mp3" />

@@ -108,7 +108,7 @@ export default {
       visitorName: '访客名称',
       visitorIp: '访客ip',
       interviewTime: '访问时间',
-      visitorType: '访客类型',
+      visitorType: '用户等级',
       operating: '操作',
       Tourist: '游客',
       user: '用户',

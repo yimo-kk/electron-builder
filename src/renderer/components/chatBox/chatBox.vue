@@ -758,7 +758,7 @@ export default {
     },
     stopSpeak() {
       this.isHeadPortrait = false
-      let { state, from_name, kefu_code } = this.selectUser
+      let { state, from_name, kefu_code, from_id } = this.selectUser
       let params = []
       if (state) {
         params = [
@@ -766,10 +766,11 @@ export default {
             kefu_code,
             username: from_name,
             type: state,
+            uid: from_id,
           },
         ]
       } else {
-        params = [{ username: from_name }]
+        params = [{ username: from_name, uid: from_id }]
       }
       this.$emit('stopSpeak', params)
     },

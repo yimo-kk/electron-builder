@@ -115,13 +115,20 @@ export function isArr (arr, key, val) {
  * @param {*} value 
  */
 export function deleteListValue (list, target, value) {
-  // let arr = []
-  // list.forEach((item) => {
-  //     if (item[target] != value) {
-  //       arr.push(item)
-  //     }
-  //   });
   return list.filter(item => {
     return item[target] != value
   })
+}
+
+/**
+ * 数组里对象某个值进行排序 高到低
+ * @param {*} property 
+ */
+export function compare (property) {
+  return function (a, b) {
+    var value1 = parseInt(a[property]);
+    var value2 = parseInt(b[property]);
+    console.log(value1, value2)
+    return value2 - value1;
+  }
 }

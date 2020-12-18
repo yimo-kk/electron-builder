@@ -37,6 +37,9 @@
               style="background:#f5f5f5;border-bottom: .5px solid #efefef"
               :title="currentUser.activtyeUsername"
             >
+              <template slot="tags">
+                <level :num="parseInt(currentUser.level)"></level>
+              </template>
               <template slot="extra">
                 <p
                   key="1"
@@ -196,6 +199,7 @@ import ChatBox from '@/components/chatBox/chatBox'
 import CurrentOperation from './component/currentOperation'
 import Multitap from './component/multitap'
 import common from '@/mixins/common'
+// import levelLogo from '@/components/level.vue'
 import {
   getUserChatLog,
   closeChat,
@@ -218,6 +222,7 @@ export default {
     ChatBox,
     CurrentOperation,
     Multitap,
+    // levelLogo,
   },
   data() {
     return {
@@ -335,6 +340,7 @@ export default {
                 activtyeUsername: '',
                 login_ip: '',
                 area: '',
+                level: 0,
               }
             }
             this.SET_CURRENT_USER(params)
@@ -370,7 +376,6 @@ export default {
       },
       deep: true,
     },
-    
   },
   methods: {
     ...mapActions(['getCurrentListData']),
@@ -399,6 +404,7 @@ export default {
         activtyeUsername: data.username,
         login_ip: data.login_ip,
         area: data.area,
+        level: data.level,
       })
     },
     getCurrentList() {
@@ -417,6 +423,7 @@ export default {
               activtyeUsername: this.currentChatList[0].username,
               login_ip: this.currentChatList[0].login_ip,
               area: this.currentChatList[0].area,
+              // level: this.currentChatList[0].level,
             })
           }
           this.getUserChatLog({
@@ -505,12 +512,18 @@ export default {
               that.$socket.emit('message', params)
               that.$message.success(that.$t('deleteSuccess'))
               that.close = false
-              that.SET_CURRENT_USER({
-                activtyUid: null,
-                activtyeUsername: '',
-                login_ip: '',
-                area: '',
-              })
+              if (
+                id == that.currentUser.activtyUid &&
+                userNmae == that.currentUser.activtyeUsername
+              ) {
+                that.SET_CURRENT_USER({
+                  activtyUid: null,
+                  activtyeUsername: '',
+                  login_ip: '',
+                  area: '',
+                  level: 0,
+                })
+              }
               that.getCurrentList()
             }
           })
@@ -568,13 +581,16 @@ export default {
     },
     confirm(val) {
       let id = null
+      let level = 0
       let userNmae = ''
       if (this.currentId) {
         id = this.currentChatList[this.currentId].uid
         userNmae = this.currentChatList[this.currentId].username
+        level = this.currentChatList[this.currentId].level
       } else {
         id = this.currentUser.activtyUid
         userNmae = this.currentUser.activtyeUsername
+        level = this.currentUser.level
       }
       this.$socket.emit('message', {
         user_id: id,
@@ -586,6 +602,7 @@ export default {
         to_kefu_name: val.kefu_name,
         seller_code: this.userInfo.seller_code,
         cmd: 'service-relink',
+        level,
       })
       this.currentId = null
       this.groupTitle = ''

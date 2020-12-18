@@ -119,15 +119,15 @@
                                   : scope.nickname
                               }}
                               <customIcon
-                                v-if="scope.forbid"
+                                v-show="scope.forbid_id"
                                 :title="
-                                  scope.forbid ? $t('groupInfo.banned') : ''
+                                  scope.forbid_id ? $t('groupInfo.banned') : ''
                                 "
                                 type="icon-32jinyan"
                                 style="fontsize: 12px"
                               ></customIcon>
                               <customIcon
-                                v-if="scope.list_id"
+                                v-show="scope.list_id"
                                 :title="
                                   scope.list_id ? $t('groupInfo.blocked') : ''
                                 "
@@ -146,7 +146,7 @@
                 </div>
               </a-tab-pane>
             </a-tabs>
-            <a-collapse accordion v-if="isAdmin">
+            <a-collapse accordion v-show="isAdmin">
               <a-collapse-panel
                 :header="$t('currentInfo.otherOperations')"
                 :key="1"
@@ -257,6 +257,7 @@
           :hour="hour"
           :minute="minute"
           :permanentTime="permanent"
+          :ispermanent="!isStopSpeak"
           @onChangeDay="
             (value) => {
               day = value
@@ -400,9 +401,9 @@ export default {
       newName: '',
       isStopSpeak: false,
       stopSpeakData: null,
-      day: null,
-      hour: null,
-      minute: null,
+      day: 0,
+      hour: 0,
+      minute: 0,
       permanent: false,
     }
   },
@@ -788,18 +789,36 @@ export default {
         okText: that.$t('determine'),
         ancelText: that.$t('cancel'),
         onOk() {
-          let arr = that.handleGroupUser.map((item) => {
+          // let arr = that.handleGroupUser.map((item) => {
+          //   if (item.type == 1) {
+          //     return {
+          //       kefu_code: item.kefu_code,
+          //       username: item.username,
+          //       type: item.type,
+          //       uid: item.uid,
+          //     }
+          //   } else {
+          //     return { username: item.username, uid: item.uid }
+          //   }
+          // })
+          let list = that.handleGroupUser.filter((item) => {
             if (item.type == 1) {
-              return {
-                kefu_code: item.kefu_code,
-                username: item.username,
-                type: item.type,
-              }
+              return (
+                !item.forbid_id && {
+                  kefu_code: item.kefu_code,
+                  username: item.username,
+                  type: item.type,
+                  uid: item.uid,
+                }
+              )
             } else {
-              return { username: item.username }
+              return (
+                !item.forbid_id && { username: item.username, uid: item.uid }
+              )
             }
           })
-          that.stopSpeak(arr)
+
+          that.stopSpeak(list)
         },
         onCancel() {},
       })
@@ -834,18 +853,34 @@ export default {
         okText: that.$t('determine'),
         cancelText: that.$t('cancel'),
         onOk() {
-          let arr = that.handleGroupUser.map((item) => {
+          // let arr = that.handleGroupUser.map((item) => {
+          //   if (item.type == 1) {
+          //     return {
+          //       kefu_code: item.kefu_code,
+          //       username: item.username,
+          //       type: item.type,
+          //     }
+          //   } else {
+          //     return { username: item.username }
+          //   }
+          // })
+          let list = that.handleGroupUser.filter((item) => {
             if (item.type == 1) {
-              return {
-                kefu_code: item.kefu_code,
-                username: item.username,
-                type: item.type,
-              }
+              return (
+                item.forbid_id && {
+                  kefu_code: item.kefu_code,
+                  username: item.username,
+                  type: item.type,
+                  uid: item.uid,
+                }
+              )
             } else {
-              return { username: item.username }
+              return (
+                item.forbid_id && { username: item.username, uid: item.uid }
+              )
             }
           })
-          that.sendForbidMessage(arr)
+          that.sendForbidMessage(list)
           that.handleGroupUser = []
           that.checkedList = []
         },
@@ -916,13 +951,19 @@ export default {
         return
       }
       if (this.isStopSpeak) {
-        this.$socket.emit('message', {
+        let params = {
           cmd: 'forbid',
+          day: this.day ? this.day : 0,
+          hour: this.hour ? this.hour : 0,
+          minute: this.minute ? this.minute : 0,
+          remarks: this.blackRemark,
+          oper_kefu_id: this.userInfo.kefu_id,
           seller_code: this.userInfo.seller_code,
           group_id: this.activityGroup.activityId,
           username: this.stopSpeakData,
           from_name: this.userInfo.kefu_name,
-        })
+        }
+        this.$socket.emit('message', params)
         this.handleGroupUser = []
         this.checkedList = []
         this.stopSpeakData = null
@@ -944,20 +985,20 @@ export default {
         }
         this.$socket.emit('message', params)
         this.handleGroupUser = []
-        this.blackRemark = ''
         this.blackdata = null
         this.isAddBlack = false
         this.checkedList = []
       }
-      this.day = null
-      this.hour = null
-      this.minute = null
+      this.day = 0
+      this.hour = 0
+      this.minute = 0
       this.permanent = false
+      this.blackRemark = ''
     },
     handleCancel() {
-      this.day = null
-      this.hour = null
-      this.minute = null
+      this.day = 0
+      this.hour = 0
+      this.minute = 0
       this.permanent = false
       this.blackRemark = ''
     },

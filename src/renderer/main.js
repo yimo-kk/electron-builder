@@ -12,6 +12,8 @@ import iconFont from './assets/iconfont/iconfont'
 import './directives/index'
 import i18n from './i18n/';
 import VueLazyload from 'vue-lazyload'
+// 全局组件
+import '@/components/global'
 Vue.use(VueLazyload)
 Vue.use(VueLazyload, {
   preLoad: 1.3,
@@ -19,10 +21,10 @@ Vue.use(VueLazyload, {
   loading: require('./assets/timg.gif'),
   attempt: 1
 })
-const  customIcon = Icon.createFromIconfontCN({
-  scriptUrl:iconFont
+const customIcon = Icon.createFromIconfontCN({
+  scriptUrl: iconFont
 })
-Vue.component('customIcon',customIcon)
+Vue.component('customIcon', customIcon)
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 import Toast from '@/components/Toast/toast'
 Vue.prototype.$toast = Toast

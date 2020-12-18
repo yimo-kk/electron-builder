@@ -32,13 +32,14 @@
         <p slot="customer_avatar" slot-scope="scope">
           <a-avatar :src="scope" />
         </p>
-        <p slot="is_tourist" slot-scope="num">
-          {{
-            num == 0
-              ? $t('awaitInfo.tableTitle.Tourist')
-              : $t('awaitInfo.tableTitle.user')
-          }}
-        </p>
+        <div
+          slot="level_name"
+          slot-scope="level_name, data"
+          class="flex_center"
+        >
+          <p>{{ level_name }}</p>
+          <level :num="parseInt(data.level)"></level>
+        </div>
         <div slot="uid" slot-scope="customer_id, data">
           <a-button
             type="primary"
@@ -102,10 +103,10 @@ export default {
         },
         {
           slotName: 'awaitInfo.tableTitle.visitorType',
-          dataIndex: 'is_tourist',
+          dataIndex: 'level_name',
           ellipsis: true,
           scopedSlots: {
-            customRender: 'is_tourist',
+            customRender: 'level_name',
             title: 'awaitInfo.tableTitle.visitorType',
           },
           align: 'center',
@@ -158,6 +159,7 @@ export default {
             kefu_name: that.userInfo.kefu_name,
             seller_code: that.userInfo.seller_code,
             uid: data.customer_id,
+            level: data.level,
           }
           reception(params).then((result) => {
             if (result.code != -1) {
@@ -168,6 +170,7 @@ export default {
                 seller_code: that.userInfo.seller_code,
                 kefu_name: that.userInfo.kefu_name,
                 cmd: 'service-prompt',
+                level: data.level,
               }
               that.$socket.emit('message', socketMessage)
               that.$store.commit('SET_CURRENT_USER', {
@@ -175,8 +178,9 @@ export default {
                 activtyeUsername: data.customer_name,
                 login_ip: data.customer_ip,
                 area: data.customer_area,
+                level: data.level,
               })
-              //  that.getCurrentListData()
+
               that.$emit('selectMenu', { key: 'CurrentChat' })
             } else {
               that.$message.error(result.msg)
