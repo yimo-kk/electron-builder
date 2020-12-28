@@ -50,11 +50,11 @@
                 @contextmenu.prevent="handleRightImg"
               />
               <div class="name_content_left">
-                <span
-                  v-if="isName"
-                  style="marginBottom: 2px; fontSize: 12px;color:#ccc;"
-                  >{{ item.state == 1 ? item.from_name : item.nickname }}</span
-                >
+                <!-- {{ item.state }} {{ item.from_name }}{{ 1 }} {{ item.nickname }} -->
+                <!--   v-if="isName" -->
+                <span style="marginBottom: 2px; fontSize: 12px;color:#ccc;">{{
+                  item.state == 1 || !isName ? item.from_name : item.nickname
+                }}</span>
                 <div class="chat_content chat_content_left">
                   <div v-if="item.type === 0" class="flex">
                     <p style="word-break: break-word;">
@@ -135,11 +135,9 @@
               v-else-if="item.from_name === userInfo.kefu_name"
             >
               <div class="name_content_right">
-                <span
-                  v-if="isName"
-                  style="marginBottom: 2px; fontSize: 12px;color:#ccc"
-                  >{{ userInfo.kefu_name }}</span
-                >
+                <span style="marginBottom: 2px; fontSize: 12px;color:#ccc">{{
+                  userInfo.kefu_name
+                }}</span>
                 <div class="chat_content chat_content_right">
                   <p style=";word-break: break-word;" v-if="item.type === 0">
                     {{ item.content || item.message }}
@@ -537,6 +535,9 @@ export default {
     currentUser() {
       return this.$store.state.Socket.currentUser
     },
+    activityGroup() {
+      return this.$store.state.Socket.activityGroup
+    },
   },
 
   watch: {
@@ -573,6 +574,14 @@ export default {
     },
     text(newVal) {
       this.sendText = JSON.parse(JSON.stringify(newVal))
+    },
+    activityGroup: {
+      handler(newVal) {
+        if (Object.keys(newVal).length) {
+          this.sendText = ''
+        }
+      },
+      deep: true,
     },
   },
   methods: {

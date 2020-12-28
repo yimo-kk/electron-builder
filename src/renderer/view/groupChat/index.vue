@@ -551,12 +551,13 @@ export default {
     },
     activityGroup: {
       handler(newVal) {
-        this.getGroupChatLog({
-          page: 1,
-          group_id: newVal.activityId,
-          kefu_id: this.userInfo.kefu_id,
-          kefu_code: this.userInfo.kefu_code,
-        })
+        newVal.activityId &&
+          this.getGroupChatLog({
+            page: 1,
+            group_id: newVal.activityId,
+            kefu_id: this.userInfo.kefu_id,
+            kefu_code: this.userInfo.kefu_code,
+          })
         this.rightNum = 0
         this.centerNum = 19
       },

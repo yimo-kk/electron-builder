@@ -102,7 +102,7 @@ export default {
         account: '',
         password: '',
       },
-      url: 'https://server.nikidigital.net',
+      url: 'https://server.customerchat.org',
     }
   },
   methods: {
@@ -161,55 +161,62 @@ export default {
     },
     // 存储账号等
     setCookie(name, value) {
-      localStorage.setItem(name, value)
-      // let Days = 300;
-      // let exp = new Date();
-      // let date = Math.round(exp.getTime() / 1000) + Days * 24 * 60 * 60;
-      //  const cookie = {
-      //   url:this.url,
-      //   name: name,
-      //   value: value,
-      //   expirationDate: date
-      // };
-      // session.defaultSession.cookies.set(cookie, (error) => {
-      //   if (error) console.error(error);
-      // });
+      // localStorage.setItem(name, value)
+      let Days = 300
+      let exp = new Date()
+      let date = Math.round(exp.getTime() / 1000) + Days * 24 * 60 * 60
+      const cookie = {
+        url: this.url,
+        name: name,
+        value: value,
+        expirationDate: date,
+      }
+      session.defaultSession.cookies.set(cookie, (error) => {
+        if (error) console.error(error)
+      })
     },
     /**
      * 获得
      */
     getCookies() {
-      this.loginData = {
-        account: localStorage.getItem('username'),
-        password: localStorage.getItem('password'),
-        shopCode: localStorage.getItem('seller_code'),
-      }
+      // this.loginData = {
+      //   account: localStorage.getItem('username'),
+      //   password: localStorage.getItem('password'),
+      //   shopCode: localStorage.getItem('seller_code'),
+      // }
 
-      //   session.defaultSession.cookies.get({ url: this.url },  (error, cookies)=> {
-      //     if (cookies.length > 0) {
-      //       this.$nextTick(()=>{
-      //           this.loginData = {
-      //           account:cookies[1].name == 'username' ? cookies[1].value:'',
-      //           password:cookies[2].name  == 'password' ? cookies[2].value:'',
-      //           shopCode:cookies[0].name  == 'seller_code' ? cookies[0].value:''
-      //         }
-      //       })
-      //     }
-      //   });
+      session.defaultSession.cookies.get(
+        { url: this.url },
+        (error, cookies) => {
+          if (cookies.length > 0) {
+            this.$nextTick(() => {
+              this.loginData = {
+                account: cookies[1].name == 'username' ? cookies[1].value : '',
+                password: cookies[2].name == 'password' ? cookies[2].value : '',
+                shopCode:
+                  cookies[0].name == 'seller_code' ? cookies[0].value : '',
+              }
+            })
+          }
+        }
+      )
     },
     /**
      * 清空缓存
      */
     clearCookies() {
-      localStorage.removeItem('username')
-      localStorage.removeItem('password')
-      localStorage.removeItem('seller_code')
-      //   session.defaultSession.clearStorageData({
-      //     origin: this.url,
-      //     storages: ['cookies']
-      //   }, function (error) {
-      //     if (error) console.error(error);
-      //   })
+      // localStorage.removeItem('username')
+      // localStorage.removeItem('password')
+      // localStorage.removeItem('seller_code')
+      session.defaultSession.clearStorageData(
+        {
+          origin: this.url,
+          storages: ['cookies'],
+        },
+        function(error) {
+          if (error) console.error(error)
+        }
+      )
     },
     getUserData(params, result) {
       this.getUserInfo({

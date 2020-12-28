@@ -7,7 +7,7 @@ import SocketIO from "socket.io-client";
 import VueSocketIO from "vue-socket.io";
 Vue.use(Router);
 const originalPush = Router.prototype.push;
-Router.prototype.push = function push(location, onResolve, onReject) {
+Router.prototype.push = function push (location, onResolve, onReject) {
   if (onResolve || onReject)
     return originalPush.call(this, location, onResolve, onReject);
   return originalPush.call(this, location).catch((err) => err);
@@ -45,23 +45,24 @@ router.beforeEach((to, from, next) => {
   let path
   if (seller_code && kefu_code) {
     path = `/socket.io/?username=${kefu_code}&code=${seller_code}&`
-  }else {
-    path =  `/socket.io/?username=loginauth&`
+  } else {
+    path = `/socket.io/?username=loginauth&`
   }
-    Vue.use(
-      new VueSocketIO({
-        debug: true,
-        connection: SocketIO.connect(`wss://server.nikidigital.net`, {
-          path:path,
-          transports: ["websocket"],
-        }),
-        vuex: {
-          store,
-          mutationPrefix: "SOCKET_",
-          actionPrefix: "SOCKET_",
-        },
-      })
-    );
+  Vue.use(
+    new VueSocketIO({
+      debug: true,
+      connection: SocketIO.connect(`wss://server.customerchat.org`, {
+        // connection: SocketIO.connect(`wss://server.nikidigital.net`, {
+        path: path,
+        transports: ["websocket"],
+      }),
+      vuex: {
+        store,
+        mutationPrefix: "SOCKET_",
+        actionPrefix: "SOCKET_",
+      },
+    })
+  );
 
   next();
 });

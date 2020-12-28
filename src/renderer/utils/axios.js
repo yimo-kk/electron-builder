@@ -3,10 +3,13 @@ import store from './../store'
 import router from '../router'
 import Message from 'ant-design-vue/es/message'
 import Toast from './../components/Toast/toast'
-const baseURL = process.env.NODE_ENV === 'development'
-  ? 'https://server.nikidigital.net'
-  : 'https://server.nikidigital.net'
-  // : 'http://140.143.128.100:3000'
+const baseURL = process.env.NODE_ENV === 'development' ? 'https://server.customerchat.org'
+  : 'https://server.customerchat.org'
+
+// ? 'https://server.nikidigital.net'
+// : 'https://server.nikidigital.net'
+// : 'http://140.143.128.100:3000'
+
 
 const instance = axios.create({
   baseURL,
@@ -16,15 +19,15 @@ const instance = axios.create({
 
 instance.interceptors.request.use(config => {
   let accessToken
-  let refreshToken 
-  if(Object.keys(router.history.current.query).length){
-    let {  kefu_code ,seller_code} =router.history.current.query
-    if(localStorage.getItem(seller_code) && JSON.parse(localStorage.getItem(seller_code))[kefu_code]){
+  let refreshToken
+  if (Object.keys(router.history.current.query).length) {
+    let { kefu_code, seller_code } = router.history.current.query
+    if (localStorage.getItem(seller_code) && JSON.parse(localStorage.getItem(seller_code))[kefu_code]) {
       accessToken = JSON.parse(localStorage.getItem(seller_code))[kefu_code]['accessToken']
       refreshToken = JSON.parse(localStorage.getItem(seller_code))[kefu_code]['refreshToken']
     }
   }
-  
+
   // let accessToken = localStorage.getItem('accessToken')
   // let refreshToken = localStorage.getItem('refreshToken')
   // if(config.url !=="/service/doLogin" && (accessToken && refreshToken)){
@@ -34,21 +37,21 @@ instance.interceptors.request.use(config => {
   //   router.push({name:"Login"})
   //   return
   // }
-  if((config.url !=="/service/doLogin" && config.url !=='/service/getKefuInfo' ) && (accessToken && refreshToken)){
-      config.headers['refresh-token'] = refreshToken
-      config.headers['access-token'] = accessToken 
-    }else if(config.url !=="/service/doLogin" && config.url !=='/service/getKefuInfo') {
-      router.push({name:"Login"})
-      return
-    }
+  if ((config.url !== "/service/doLogin" && config.url !== '/service/getKefuInfo') && (accessToken && refreshToken)) {
+    config.headers['refresh-token'] = refreshToken
+    config.headers['access-token'] = accessToken
+  } else if (config.url !== "/service/doLogin" && config.url !== '/service/getKefuInfo') {
+    router.push({ name: "Login" })
+    return
+  }
   return config
 }, error => {
   Message.error(error)
-  Promise.reject(error) 
+  Promise.reject(error)
 })
 instance.interceptors.response.use(
   response => {
-      return response.data
+    return response.data
   },
   error => {
     if (error.response) {

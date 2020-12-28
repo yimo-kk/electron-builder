@@ -45,6 +45,7 @@ const state = {
   kefuOnline: {}, // 客服上线
   pullUsersGroup: [], // 拉人进群
   saveNickname: {}, // 修改群成员昵称
+  closeUsers: {}, // 自动关闭长时间为回复的用户
 }
 const getters = {
   currentNum (state) {
@@ -77,6 +78,10 @@ const mutations = {
   // 客服修改群成员昵称
   SOCKET_saveNickname: (state, data) => {
     state.saveNickname = data
+  },
+  // 长时间用户没回复自动删除该用户
+  SOCKET_closeUsers: (state, data) => {
+    state.closeUsers = data
   },
   // 客服被删除
   SOCKET_delKefu: (state, data) => {
@@ -309,6 +314,7 @@ const mutations = {
     state.userForbid = {} //禁言个人 
     state.kefuStatus = {}
     state.oldUser = {}//上次接待的人
+    state.closeUsers = {}
   },
 }
 const actions = {

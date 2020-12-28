@@ -107,7 +107,7 @@
                             class="question dwote"
                             @click.stop="speedySennd(val.word)"
                           >
-                            {{ val.word }}
+                            {{ val.title }}
                           </p>
                         </a-tooltip>
                       </div>
@@ -133,7 +133,7 @@
                                 class="question dwote"
                                 @click="speedySennd(val.word)"
                               >
-                                {{ val.word }}
+                                {{ val.title }}
                               </p>
                             </a-tooltip>
                           </div>
@@ -252,6 +252,9 @@ export default {
     }
   },
   computed: {
+    closeUsers() {
+      return this.$store.state.Socket.closeUsers
+    },
     userMessage() {
       return this.$store.state.Socket.userMessage
     },
@@ -291,6 +294,7 @@ export default {
           }
           data.type === 0 &&
             (data.message = conversionFace(data.content || data.message))
+          data.create_time = data.createtime
           this.currentChatLogList.push(data)
         }
       },
@@ -375,6 +379,23 @@ export default {
             is_relink: newVal.is_relink,
             seller_code: this.userInfo.seller_code,
           })
+        }
+      },
+      deep: true,
+    },
+    closeUsers: {
+      handler(newVal) {
+        if (newVal.message.length) {
+          let arr = []
+          newVal.message.forEach((item) => {
+            this.autoCloseChat(item.uid, item.username)
+            JSON.parse(JSON.stringify(this.currentChatList)).forEach((ele) => {
+              if (item.uid != ele.uid) {
+                arr.push(ele)
+              }
+            })
+          })
+          this.SET_CURRENT_CHAT_LIST(arr)
         }
       },
       deep: true,
@@ -708,6 +729,42 @@ export default {
     },
     textToSpeech(val) {
       this.isTextToSpeech = val
+    },
+    autoCloseChat(id, userNmae) {
+      closeChat({
+        uid: id,
+        kefu_code: this.userInfo.kefu_code,
+      })
+        .then((result) => {
+          if (result.code == 0) {
+            let params = {
+              from_avatar: this.userInfo.kefu_avatar,
+              from_name: this.userInfo.kefu_name,
+              kefu_code: this.userInfo.kefu_code,
+              kefu_id: this.userInfo.kefu_id,
+              seller_code: this.userInfo.seller_code,
+              username: userNmae,
+              cmd: 'service-score',
+            }
+            this.$socket.emit('message', params)
+            if (
+              id == this.currentUser.activtyUid &&
+              userNmae == this.currentUser.activtyeUsername
+            ) {
+              this.SET_CURRENT_USER({
+                activtyUid: null,
+                activtyeUsername: '',
+                login_ip: '',
+                area: '',
+                level: 0,
+                is_relink: null,
+              })
+            }
+          }
+        })
+        .catch((err) => {
+          console.log(err)
+        })
     },
   },
   mounted() {

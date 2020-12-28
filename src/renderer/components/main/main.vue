@@ -146,9 +146,12 @@ export default {
       return this.$store.state.Socket.chatList
     },
     userInfo() {
-      return JSON.parse(localStorage.getItem(this.$route.query.seller_code))[
-        this.$route.query.kefu_code
-      ]
+      return (
+        this.$route.query.seller_code &&
+        JSON.parse(localStorage.getItem(this.$route.query.seller_code))[
+          this.$route.query.kefu_code
+        ]
+      )
     },
     currentUser() {
       return this.$store.state.Socket.currentUser
@@ -420,6 +423,21 @@ export default {
       })
       this.setStatus(1)
     },
+    polling() {
+      let timeOut = null
+
+      timeOut = setInterval(() => {
+        if (this.$route.query.seller_code) {
+          this.$socket.emit('message', {
+            cmd: 'closetime-processing',
+            kefu_code: this.userInfo.kefu_code,
+            seller_code: this.userInfo.seller_code,
+          })
+        } else {
+          clearInterval(timeOut)
+        }
+      }, 10000)
+    },
   },
   mounted() {
     this.getMessageList({
@@ -435,6 +453,7 @@ export default {
     this.$electron.ipcRenderer.on('show_tab', (data, val) => {
       this.selectedKey = val
     })
+    this.polling()
   },
 }
 </script>

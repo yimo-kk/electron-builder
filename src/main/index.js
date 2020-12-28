@@ -9,7 +9,8 @@ import {
 } from "electron";
 import path from "path";
 import { updateHandle } from './update'
-const feedUrl = 'https://user.nikidigital.net/'
+// const feedUrl = 'https://user.nikidigital.net/'
+const feedUrl = 'https://user.customerchat.org/'
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
