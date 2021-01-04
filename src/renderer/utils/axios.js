@@ -3,11 +3,12 @@ import store from './../store'
 import router from '../router'
 import Message from 'ant-design-vue/es/message'
 import Toast from './../components/Toast/toast'
-const baseURL = process.env.NODE_ENV === 'development' ? 'https://server.customerchat.org'
-  : 'https://server.customerchat.org'
-
-// ? 'https://server.nikidigital.net'
-// : 'https://server.nikidigital.net'
+import { BaseUrl } from '@/config.js'
+const baseURL = process.env.NODE_ENV === 'development' ? BaseUrl.VUE_APP_BASE_URL
+  : BaseUrl.VUE_APP_BASE_URL
+// const baseURL = process.env.NODE_ENV === 'development' ? 'https://server.customerchat.org'
+//   : 'https://server.customerchat.org'
+//  'https://server.nikidigital.net'
 // : 'http://140.143.128.100:3000'
 
 

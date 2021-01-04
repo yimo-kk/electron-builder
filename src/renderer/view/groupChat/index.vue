@@ -1,10 +1,10 @@
 <template>
   <div class="groupChat">
-    <a-row class="full_height" v-if="$store.state.Socket.chatList.length">
+    <a-row class="full_height" v-if="chatList.length">
       <a-col :span="5" class="chat_left">
-        <div v-if="$store.state.Socket.chatList.length">
+        <div v-if="chatList.length">
           <div
-            v-for="item in this.$store.state.Socket.chatList"
+            v-for="item in chatList"
             :key="item.id"
             :class="[
               'hover_item',
@@ -342,12 +342,12 @@ import memberList from './component/memberList'
 import editMemberInfo from './component/editMemberInfo'
 import addBalckTime from './component/addBalckTime'
 import common from '@/mixins/common'
-import { mapMutations, mapActions } from 'vuex'
+import { mapMutations, mapActions, mapState } from 'vuex'
 import {
   conversionFace,
   compressImage,
   isImage,
-  conversion,
+  // conversion,
 } from '@/utils/libs.js'
 import {
   getGroupChatLog,
@@ -408,6 +408,9 @@ export default {
     }
   },
   computed: {
+    chatList() {
+      return this.$store.state.Socket.chatList
+    },
     groupMessage() {
       return this.$store.state.Socket.groupMessage
     },
@@ -470,6 +473,23 @@ export default {
           data.type === 0 &&
             (data.message = conversionFace(data.content || data.message))
           data.create_time = newVal.createtime
+          let firstData = {}
+          let newGroupChatList = []
+          JSON.parse(JSON.stringify(this.chatList)).forEach((item) => {
+            if (item.group_id == data.group_id) {
+              item.lastMsg = {
+                content: data.message,
+                create_time: data.createtime,
+                type: data.type,
+              }
+              firstData = item
+            } else {
+              newGroupChatList.push(item)
+            }
+          })
+          newGroupChatList.unshift(firstData)
+          this.SET_CHAT_LIST(newGroupChatList)
+
           this.chatLogList.push(data)
         }
       },
@@ -574,10 +594,11 @@ export default {
     },
     kefuOnline: {
       handler(newVal) {
-        this.getGroupMemberList({
-          group_id: this.activityGroup.activityId,
-          seller_code: this.userInfo.seller_code,
-        })
+        this.activityGroup.activityId &&
+          this.getGroupMemberList({
+            group_id: this.activityGroup.activityId,
+            seller_code: this.userInfo.seller_code,
+          })
       },
       deep: true,
     },
@@ -643,7 +664,7 @@ export default {
         from_ip: this.$store.state.Login.userIp.ip,
       }
       let sendMessage = JSON.parse(JSON.stringify(my_send))
-      type === 0 && (sendMessage.message = conversion(my_send.message))
+      // type === 0 && (sendMessage.message = conversion(my_send.message))
       this.$socket.emit('message', sendMessage)
     },
     uploadImage(file, type) {
@@ -689,13 +710,9 @@ export default {
       this.chatLogList = []
       this.checkedList = []
       this.page = 1
-      if (this.$store.state.Socket.chatList.length) {
-        let chatList = this.arrayExists(
-          this.$store.state.Socket.chatList,
-          data.group_id,
-          false
-        )
-        this.SET_CHAT_LIST(chatList)
+      if (this.chatList.length) {
+        let chatListArr = this.arrayExists(this.chatList, data.group_id, false)
+        this.SET_CHAT_LIST(chatListArr)
       }
       if (this.activtTabs == '1' && this.rightNum) {
         this.getGroupMemberList({
@@ -1166,29 +1183,25 @@ export default {
         if (this.$store.state.Socket.chatList.length) {
           if (!this.activityGroup.activityId) {
             this.SET_ACTIVITY_GROUP({
-              activityId: this.$store.state.Socket.chatList[0].group_id,
-              activityTitle: this.$store.state.Socket.chatList[0].group_name,
-              is_invite: this.$store.state.Socket.chatList[0].is_invite,
-              on_file: this.$store.state.Socket.chatList[0].on_file,
-              on_voice: this.$store.state.Socket.chatList[0].on_voice,
-              img: this.$store.state.Socket.chatList[0].group_avatar,
+              activityId: this.chatList[0].group_id,
+              activityTitle: this.chatList[0].group_name,
+              is_invite: this.chatList[0].is_invite,
+              on_file: this.chatList[0].on_file,
+              on_voice: this.chatList[0].on_voice,
+              img: this.chatList[0].group_avatar,
             })
-            let arr = JSON.parse(
-              JSON.stringify(this.$store.state.Socket.chatList)
-            )
+            let arr = JSON.parse(JSON.stringify(this.chatList))
             arr[0].noReadNum = 0
             this.SET_CHAT_LIST(arr)
             this.chatLogList = []
             this.getGroupChatLog({
               page: 1,
-              group_id: this.$store.state.Socket.chatList[0].group_id,
+              group_id: this.chatList[0].group_id,
               kefu_id: this.userInfo.kefu_id,
               kefu_code: this.userInfo.kefu_code,
             })
           } else {
-            let arr = JSON.parse(
-              JSON.stringify(this.$store.state.Socket.chatList)
-            )
+            let arr = JSON.parse(JSON.stringify(this.chatList))
             let list = arr.map((item) => {
               if (item.group_id === this.activityGroup.activityId) {
                 item.noReadNum = 0

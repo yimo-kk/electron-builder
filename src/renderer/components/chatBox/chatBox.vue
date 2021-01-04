@@ -50,15 +50,17 @@
                 @contextmenu.prevent="handleRightImg"
               />
               <div class="name_content_left">
-                <!-- {{ item.state }} {{ item.from_name }}{{ 1 }} {{ item.nickname }} -->
                 <!--   v-if="isName" -->
                 <span style="marginBottom: 2px; fontSize: 12px;color:#ccc;">{{
                   item.state == 1 || !isName ? item.from_name : item.nickname
                 }}</span>
                 <div class="chat_content chat_content_left">
                   <div v-if="item.type === 0" class="flex">
-                    <p style="word-break: break-word;">
-                      {{ item.content || item.message }}
+                    <p
+                      style="word-break: break-word;"
+                      v-html="parsingEmoji(item.content || item.message)"
+                    >
+                      <!-- {{ item.content || item.message }} -->
                     </p>
                   </div>
 
@@ -139,8 +141,12 @@
                   userInfo.kefu_name
                 }}</span>
                 <div class="chat_content chat_content_right">
-                  <p style=";word-break: break-word;" v-if="item.type === 0">
-                    {{ item.content || item.message }}
+                  <p
+                    style=";word-break: break-word;"
+                    v-if="item.type === 0"
+                    v-html="parsingEmoji(item.content || item.message)"
+                  >
+                    <!-- {{ item.content || item.message }} -->
                   </p>
                   <div v-else-if="item.type === 1" class="pictrue">
                     <img
@@ -216,6 +222,8 @@
         </div>
       </div>
       <div class="input_box">
+        <!-- <InputBox></InputBox> -->
+
         <div class="other flex_up_down_center">
           <customIcon
             :title="$t('currentInfo.expression')"
@@ -257,6 +265,7 @@
             ></customIcon>
           </p>
         </div>
+
         <a-textarea
           v-model.trim="sendText"
           :placeholder="$t('currentInfo.pleaseEnter')"
@@ -279,7 +288,8 @@ Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
             {{ $t('currentInfo.send') }}
           </p>
         </div>
-        <!-- 表情区域 -->
+        <!--  表情区域 -->
+
         <div v-show="faceShow">
           <div
             class="mask"
@@ -293,12 +303,20 @@ Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
           <div class="browBox">
             <ul>
               <li
+                v-html="parsingEmoji(item.name)"
+                v-for="(item, index) in faceList"
+                :key="index"
+                @click.stop="getBrow(index)"
+              ></li>
+
+              <!-- <li
                 v-for="(item, index) in faceList"
                 :key="index"
                 @click.stop="getBrow(index)"
               >
-                {{ item.char }}
-              </li>
+                {{ item.char }} 
+                {{ item }}
+              </li> -->
             </ul>
           </div>
         </div>
@@ -389,9 +407,15 @@ Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
 </template>
 
 <script>
+import { emojisAmap, wChatToUi } from '../../assets/emjoy/emjoydata'
 const { dialog } = require('electron').remote
 const path = require('path')
-import { conversionFace, conversion, isImage } from '@/utils/libs.js'
+import {
+  conversionFace,
+  // conversion,
+  isImage,
+  clipboardImg,
+} from '@/utils/libs.js'
 import Recorder from 'js-audio-recorder'
 const recorder = new Recorder({
   sampleBits: 8, // 采样位数，支持 8 或 16，默认是16
@@ -401,8 +425,8 @@ const recorder = new Recorder({
 import { serviceSendChatFile, uploadVoice } from '@/api/current.js'
 const appData = require('@/assets/emojis.json')
 import Audio from './audio'
-// import IatRecorder from '@/utils/js/IatRecorder.js'
-// const iatRecorder = new IatRecorder('en_us')
+
+import InputBox from './inputBox'
 import chat from '@/mixins/chat'
 import popup from '../popup/popup'
 const electron = require('electron')
@@ -432,6 +456,12 @@ var downloadImgtext = [
       )
     },
   },
+  {
+    label: '复制',
+    click: () => {
+      clipboardImg(imgUrl)
+    },
+  },
 ]
 var downloadImgMenu = remote.Menu.buildFromTemplate(downloadImgtext)
 export default {
@@ -441,7 +471,6 @@ export default {
     prop: 'text',
     event: 'inputText',
   },
-
   props: {
     text: {
       type: String,
@@ -486,6 +515,7 @@ export default {
   components: {
     Audio,
     popup,
+    InputBox,
   },
   data() {
     return {
@@ -511,6 +541,8 @@ export default {
       sendFiletoHead: '',
       sendFiletoName: '',
       currentsendData: null,
+      // inputValue: { txt: '明天约吗？[E415]' },
+      insertion: '',
     }
   },
   computed: {
@@ -557,7 +589,8 @@ export default {
     },
     sendText(newVal) {
       if (!newVal) return
-      var str = conversion(newVal, 3333)
+      // var str = conversion(newVal)
+      var str = newVal
       if (str.length >= 240) {
         this.$message.error(this.$t('overLimit'))
         var string = str.slice(0, 240)
@@ -567,9 +600,10 @@ export default {
             arr.pop()
           }
         })
-        this.sendText = conversionFace(arr.join('['))
+        //  this.sendText = conversionFace(arr.join('['))
+        this.sendText = arr.join('[')
       } else {
-        this.sendText = conversionFace(str)
+        // this.sendText = conversionFace(str)
       }
     },
     text(newVal) {
@@ -628,26 +662,54 @@ export default {
           this.loading = false
         })
     },
+
+    // 获取表情
     faceContent() {
       this.faceShow = !this.faceShow
       if (this.faceShow == true) {
-        for (let i in appData) {
-          appData[i].name = i
-          this.faceList.push(appData[i])
+        // this.faceList = Object.keys(emojisAmap).map((item) => {
+        //   return `[${item}]`
+        // })
+        // this.faceList.push(...Object.values(wChatToUi))
+        for (let key in emojisAmap) {
+          let obj = {}
+          obj[key] = emojisAmap[key]
+          obj.name = `[${key}]`
+          obj.oldName = key
+          this.faceList.push(obj)
+        }
+        for (let key in wChatToUi) {
+          let obj = {}
+          obj[wChatToUi[key]] = key
+          obj.name = wChatToUi[key]
+          obj.oldName = key
+          this.faceList.push(obj)
         }
       } else {
         this.faceList = []
       }
+      // if (this.faceShow == true) {
+      //   for (let i in appData) {
+      //     appData[i].name = i
+      //     this.faceList.push(appData[i])
+      //   }
+      // } else {
+      //   this.faceList = []
+      // }
     },
     // 获取用户点击表情之后的标签 ，存放到输入框内
     getBrow(index) {
       for (let i in this.faceList) {
         if (index == i) {
-          this.getBrowString = this.faceList[index].char
-          this.sendText += this.getBrowString
+          // this.inputValue.txt += this.faceList[index]
+          // this.insertion = this.faceList[index]
+          // this.getBrowString = this.faceList[index].char
+          // this.sendText += this.getBrowString
+          this.sendText += `[${this.faceList[index].oldName}]`
         }
       }
     },
+
     // 来的消息显示在最下面
     messageDown() {
       if (this.chatLogListData.length && this.isMore == false) {
@@ -972,6 +1034,10 @@ export default {
           e.preventDefault()
           e.stopPropagation()
           this.currentsendData = e.dataTransfer.files[0]
+
+          if (!this.currentsendData) {
+            return
+          }
           this.sendFilePopup = true
           this.sendFileType = this.isImageTo(this.currentsendData.type) ? 1 : 2
           this.sendFileName = this.currentsendData.name
@@ -999,43 +1065,6 @@ export default {
       this.sendFiletoHead = ''
       this.sendFiletoName = ''
     },
-    // menuNotClick() {
-    //   // 下面这句代码是获取 点击的区域是否包含你的菜单，如果包含，说明点击的是菜单以外，不包含则为菜单以内
-    //   document.addEventListener('click', (e) => {
-    //     let flag = e.target.contains(
-    //       document.getElementsByClassName('click_head_portrait')[0]
-    //     )
-    //     if (flag) return
-    //     this.isHeadPortrait = false
-    //   })
-    // },
-    // // 文字转语音开始
-    // textChange() {
-    //   let that = this
-    //   if (
-    //     ['init', 'endPlay', 'errorTTS'].indexOf(this.iatRecorder.status) > -1
-    //   ) {
-    //     this.iatRecorder.start()
-    //   } else {
-    //     this.iatRecorder.stop()
-    //   }
-    // },
-    // // 文字转语音结束
-    // translationEnd() {
-    //   this.iatRecorder.stop()
-    // },
-    // // 转语音的文字
-    // translationStart(val, index) {
-    //   if (this.ttsIndex && this.ttsIndex === index) {
-    //     this.iatRecorder.stop()
-    //     return
-    //   }
-    //   this.ttsIndex = index
-    //   this.iatRecorder.setParams({
-    //     text: val,
-    //   })
-    //   this.textChange()
-    // },
     // 当选择文字转语音
     textToSpeech(e) {
       this.$emit('textToSpeech', e.target.checked)
@@ -1053,9 +1082,6 @@ export default {
     this.downloadProcess()
     this.changeImageSize()
     this.dragIn()
-  },
-  destroyed() {
-    // this.$refs.viewImage.removeEventListener('wheel', this.changeImg, false)
   },
 }
 </script>

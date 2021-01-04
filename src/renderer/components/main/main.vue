@@ -145,6 +145,7 @@ export default {
     chatList() {
       return this.$store.state.Socket.chatList
     },
+
     userInfo() {
       return (
         this.$route.query.seller_code &&
@@ -156,14 +157,14 @@ export default {
     currentUser() {
       return this.$store.state.Socket.currentUser
     },
+    kefuStatus() {
+      return this.$store.state.Socket.kefuStatus.online_status
+    },
   },
   sockets: {
     // connect:查看socket是否渲染成功
     connect() {
-      this.$socket.emit('init', {
-        seller_code: this.userInfo.seller_code,
-        kefu_code: this.userInfo.kefu_code,
-      })
+      this.reconnect()
     },
     // disconnect:检测socket断开连接
     disconnect(data) {},
@@ -421,7 +422,6 @@ export default {
         seller_code: this.userInfo.seller_code,
         kefu_code: this.userInfo.kefu_code,
       })
-      this.setStatus(1)
     },
     polling() {
       let timeOut = null
@@ -433,12 +433,14 @@ export default {
             kefu_code: this.userInfo.kefu_code,
             seller_code: this.userInfo.seller_code,
           })
+          this.setStatus(this.kefuStatus)
         } else {
           clearInterval(timeOut)
         }
-      }, 10000)
+      }, 20000)
     },
   },
+
   mounted() {
     this.getMessageList({
       seller_code: this.userInfo.seller_code,
@@ -453,7 +455,7 @@ export default {
     this.$electron.ipcRenderer.on('show_tab', (data, val) => {
       this.selectedKey = val
     })
-    this.polling()
+    this.$route.query.seller_code && this.polling()
   },
 }
 </script>

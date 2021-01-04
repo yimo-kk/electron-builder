@@ -1,6 +1,6 @@
 // import electron from 'electron'
 import { getGroupList } from "@/api/group.js";
-import { isArr, deleteListValue, compare } from "@/utils/libs.js";
+import { isArr, deleteListValue, compare, compareTime } from "@/utils/libs.js";
 import Toast from '@/components/Toast/toast'
 import router from '@/router'
 import { getCustomerQueue } from "@/api/await.js";
@@ -83,6 +83,14 @@ const mutations = {
   SOCKET_closeUsers: (state, data) => {
     state.closeUsers = data
   },
+  // 商户过期
+  SOCKET_expired: (state, data) => {
+    Toast({
+      icon: 'close',
+      content: data.message
+    })
+    router.push({ name: 'Login' })
+  },
   // 客服被删除
   SOCKET_delKefu: (state, data) => {
     Toast({
@@ -117,6 +125,8 @@ const mutations = {
   SOCKET_userDel: (state, data) => {
     let arr = deleteListValue(state.awaitList, 'customer_id', data.uid)
     state.awaitList = arr
+    let currentArr = deleteListValue(state.currentChatList, 'uid', data.uid)
+    state.currentChatList = currentArr
   },
   SOCKET_prompt: (state, data) => {
     let arr = deleteListValue(state.awaitList, 'customer_id', data.uid)
@@ -254,7 +264,7 @@ const mutations = {
       }
     }
     state.oldUser = data
-    !isArr(state.currentChatList, 'username', data.username) && state.currentChatList.push(data)
+    !isArr(state.currentChatList, 'username', data.username) && state.currentChatList.unshift(data)
   },
   SET_STATUS (state, data) {
     state.status = data
@@ -322,8 +332,10 @@ const actions = {
   getGroupList ({ commit }, data) {
     return new Promise(async (resolve, reject) => {
       await getGroupList(data).then((result) => {
-        commit('SET_CHAT_LIST', result.data)
-        resolve(result.data);
+        let groupList = JSON.parse(JSON.stringify(result.data))
+        groupList.sort(compareTime('lastMsg', 'create_time'));
+        commit('SET_CHAT_LIST', groupList)
+        resolve(groupList);
       })
         .catch(err => {
           reject(err);
@@ -354,6 +366,7 @@ const actions = {
           })
           return item
         })
+        currentChatList.sort(compareTime('lastMsg', 'create_time'));
         commit('SET_CURRENT_CHAT_LIST', currentChatList)
         resolve(currentChatList);
       })

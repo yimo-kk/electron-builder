@@ -1,4 +1,8 @@
 export default {
+  correctCode: 'Please enter the correct merchant identification code!',
+  listViewImg: `[Image]`,
+  listViewFile: `[File]`,
+  listViewVoice: `[Voice]`,
   day: 'Day',
   hour: 'Hour',
   minute: 'Minute',

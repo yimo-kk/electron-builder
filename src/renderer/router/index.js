@@ -5,6 +5,7 @@ import routers from "./router";
 // socket
 import SocketIO from "socket.io-client";
 import VueSocketIO from "vue-socket.io";
+import { BaseUrl } from '@/config.js'
 Vue.use(Router);
 const originalPush = Router.prototype.push;
 Router.prototype.push = function push (location, onResolve, onReject) {
@@ -51,7 +52,7 @@ router.beforeEach((to, from, next) => {
   Vue.use(
     new VueSocketIO({
       debug: true,
-      connection: SocketIO.connect(`wss://server.customerchat.org`, {
+      connection: SocketIO.connect(`wss://${BaseUrl.VUE_APP_BASE_URL_CONTENT}`, {
         // connection: SocketIO.connect(`wss://server.nikidigital.net`, {
         path: path,
         transports: ["websocket"],

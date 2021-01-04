@@ -1,6 +1,6 @@
 {
   "name": "service",
-  "version": "1.0.11",
+  "version": "1.0.16",
   "author": "",
   "description": "An electron-vue project",
   "license": null,
@@ -24,7 +24,7 @@
     },
     "publish": [{
       "provider": "generic",
-      "url": "https://user.customerchat.org/"
+      "url": "https://user.nikidigital.net/"
     }],
     "files": [
       "dist/electron/**/*"
@@ -55,6 +55,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "electron-store": "^6.0.1",
     "electron-updater": "^4.3.5",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",

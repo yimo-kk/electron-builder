@@ -11,6 +11,9 @@ import { Icon } from 'ant-design-vue'
 import iconFont from './assets/iconfont/iconfont'
 import './directives/index'
 import i18n from './i18n/';
+// 表情
+import './assets/emjoy/emjoymethod.js'
+import './assets/emjoy/emjoy.css'
 import VueLazyload from 'vue-lazyload'
 // 全局组件
 import '@/components/global'

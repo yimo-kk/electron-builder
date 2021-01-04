@@ -16,7 +16,7 @@
               item.uid == currentUser.activtyUid ? 'activt_item' : '',
               'current_list',
             ]"
-            style="padding:5px 10px 5px 10px"
+            style="padding:5px  5px "
             @contextmenu.prevent="currentChatListItem"
           >
             <div>
@@ -211,7 +211,7 @@ import {
   conversionFace,
   compressImage,
   isImage,
-  conversion,
+  // conversion,
 } from '@/utils/libs.js'
 export default {
   name: 'CurrentChat',
@@ -280,7 +280,6 @@ export default {
     // 收到用户发来消息
     userMessage: {
       handler(newVal) {
-        // if(newVal.from_name === ){}
         let data = JSON.parse(JSON.stringify(newVal))
         if (data.from_name == this.currentUser.activtyeUsername) {
           this.$socket.emit('message', {
@@ -297,6 +296,22 @@ export default {
           data.create_time = data.createtime
           this.currentChatLogList.push(data)
         }
+        let firstData = {}
+        let newCurrentChatList = []
+        JSON.parse(JSON.stringify(this.currentChatList)).forEach((item) => {
+          if (item.username == data.from_name) {
+            item.lastMsg = {
+              content: data.message,
+              create_time: data.createtime,
+              type: data.type,
+            }
+            firstData = item
+          } else {
+            newCurrentChatList.push(item)
+          }
+        })
+        Object.keys(firstData).length && newCurrentChatList.unshift(firstData)
+        this.SET_CURRENT_CHAT_LIST(newCurrentChatList)
       },
       deep: true,
     },
@@ -313,6 +328,34 @@ export default {
           my_send.create_time = newVal.createtime
           this.currentChatLogList.push(my_send)
         }
+        let firstData = {}
+        let newCurrentChatList = []
+        JSON.parse(JSON.stringify(this.currentChatList)).forEach((item) => {
+          if (item.username == this.currentUser.activtyeUsername) {
+            item.lastMsg = {
+              content: my_send.message,
+              create_time: my_send.create_time,
+              type: my_send.type,
+            }
+            firstData = item
+          } else {
+            newCurrentChatList.push(item)
+          }
+        })
+        Object.keys(firstData).length && newCurrentChatList.unshift(firstData)
+        // let newCurrentChatList = JSON.parse(
+        //   JSON.stringify(this.currentChatList)
+        // ).map((item) => {
+        //   if (item.username == this.currentUser.activtyeUsername) {
+        //     item.lastMsg = {
+        //       content: my_send.message,
+        //       create_time: my_send.create_time,
+        //       type: my_send.type,
+        //     }
+        //   }
+        //   return item
+        // })
+        this.SET_CURRENT_CHAT_LIST(newCurrentChatList)
       },
       deep: true,
     },
@@ -386,16 +429,16 @@ export default {
     closeUsers: {
       handler(newVal) {
         if (newVal.message.length) {
-          let arr = []
-          newVal.message.forEach((item) => {
+          let arr = newVal.message.map((item) => {
             this.autoCloseChat(item.uid, item.username)
-            JSON.parse(JSON.stringify(this.currentChatList)).forEach((ele) => {
-              if (item.uid != ele.uid) {
-                arr.push(ele)
-              }
-            })
+            return item.uid
           })
-          this.SET_CURRENT_CHAT_LIST(arr)
+          let currentList = JSON.parse(
+            JSON.stringify(this.currentChatList)
+          ).filter((ele) => {
+            return !arr.includes(ele.uid)
+          })
+          this.SET_CURRENT_CHAT_LIST(currentList)
         }
       },
       deep: true,
@@ -583,7 +626,7 @@ export default {
       }
       let sendMessage = JSON.parse(JSON.stringify(my_send))
       if (type === 0) {
-        sendMessage.message = conversion(my_send.message)
+        // sendMessage.message = conversion(my_send.message)
         sendMessage.is_voice = this.isTextToSpeech ? 1 : 0
       }
       this.$socket.emit('message', sendMessage)

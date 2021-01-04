@@ -10,53 +10,68 @@
         :wrapper-col="{ span: 17 }"
         @submit="handleSubmit"
       >
-        <a-form-item :label="$t('login.shopCode')">
+        <a-form-item :label="$t('login.shopCode')" style="position: relative;">
+          <!--    @blur="shopCodeBlur" -->
           <a-input
+            @focus="shopCodeFocus"
+            v-model="loginData.shopCode"
             :placeholder="$t('login.pleaseShopCode')"
-            v-decorator="[
-              'shopCode',
-              { initialValue: loginData.shopCode },
-              {
-                rules: [
-                  { required: true, message: $t('login.pleaseShopCode') },
-                  {
-                    validator: validateShopCode,
-                  },
-                ],
-              },
-            ]"
             allowClear
           >
             <a-icon slot="prefix" type="shop" />
           </a-input>
+          <div
+            class="show-shopCode pointer"
+            v-show="showShopCode"
+            @click="getShopCode"
+          >
+            <p
+              v-for="(item, index) in shopCodeList"
+              :key="index"
+              :data-index="item.value"
+              class="shopCode-item isShowShopCode"
+            >
+              {{ item.value }}
+            </p>
+          </div>
         </a-form-item>
-        <a-form-item :label="$t('login.account')">
+        <a-form-item :label="$t('login.account')" style="position: relative;">
+          <!--  @blur="accountBlur" -->
           <a-input
+            @focus="accountFocus"
+            v-model="loginData.account"
             :placeholder="$t('login.pleaseAccount')"
-            v-decorator="[
-              'account',
-              { initialValue: loginData.account },
-              {
-                rules: [{ required: true, message: $t('login.pleaseAccount') }],
-              },
-            ]"
             allowClear
           >
             <a-icon slot="prefix" type="user" />
           </a-input>
+          <div
+            class="show-shopCode pointer"
+            v-show="showAccountList"
+            @click="getAccount"
+          >
+            <p
+              v-for="(item, index) in shopAccountList"
+              :key="index"
+              :data-index="
+                JSON.stringify({ account: item.value, password: item.password })
+              "
+              class="shopCode-item isShopAccount"
+            >
+              {{ item.value }}
+              <a-icon
+                type="close-circle"
+                @click.stop="
+                  closeAccount({ account: item.value, password: item.password })
+                "
+              />
+            </p>
+          </div>
         </a-form-item>
         <a-form-item :label="$t('login.password')">
           <a-input-password
-            :placeholder="$t('login.pleasePassword')"
-            v-decorator="[
-              'password',
-              { initialValue: loginData.password },
-              {
-                rules: [
-                  { required: true, message: $t('login.pleasePassword') },
-                ],
-              },
-            ]"
+            v-model="loginData.password"
+            :placeholder="$t('login.pleaseAccount')"
             allowClear
           >
             <a-icon slot="prefix" type="lock" />
@@ -84,6 +99,9 @@
 </template>
 
 <script>
+import Store from 'electron-store'
+const store = new Store()
+import { BaseUrl } from '../../config.js'
 const session = require('electron').remote.session
 const { remote } = require('electron')
 import { mapActions, mapMutations } from 'vuex'
@@ -102,8 +120,20 @@ export default {
         account: '',
         password: '',
       },
-      url: 'https://server.customerchat.org',
+      showShopCode: false,
+      shopCodeList: [],
+      showAccountList: false,
+      shopAccountList: [],
+      loginUserInfo: {}, //存储得数据
     }
+  },
+  watch: {
+    showShopCode(val) {
+      val && (this.showAccountList = !val)
+    },
+    showAccountList(val) {
+      val && (this.showShopCode = !val)
+    },
   },
   methods: {
     ...mapActions(['handleLogin', 'getUserInfo']),
@@ -112,22 +142,36 @@ export default {
       e.preventDefault()
       this.loginParam.validateFields((err, values) => {
         if (!err) {
-          let params = {
-            username: values.account,
-            password: values.password,
-            seller_code: values.shopCode,
+          if (!this.loginData.shopCode) {
+            this.$message.error(this.$t('correctCode'))
+            return
           }
-          if (values.remember) {
-            this.setCookie('seller_code', params.seller_code)
-            this.setCookie('username', params.username)
-            this.setCookie('password', params.password)
-          } else {
-            this.clearCookies()
+          if (!this.loginData.account) {
+            this.$message.error(this.$t('login.pleasePassword'))
+            return
+          }
+          if (!this.loginData.password) {
+            this.$message.error(this.$t('login.pleasePassword'))
+            return
+          }
+          let params = {
+            username: this.loginData.account,
+            password: this.loginData.password,
+            seller_code: this.loginData.shopCode,
           }
           this.loading = true
           this.handleLogin(params)
             .then((result) => {
               if (result.code === 0) {
+                if (values.remember) {
+                  this.setCookie({
+                    logoNum: params.seller_code,
+                    account: params.username,
+                    password: params.password,
+                  })
+                } else {
+                  this.setCookie(params.seller_code, params.username, '')
+                }
                 this.$message.success(result.msg)
                 this.getUserData(params, result)
               } else if (result.code === -7) {
@@ -154,69 +198,56 @@ export default {
     validateShopCode(rule, value, callback) {
       var reg = /[^\w\.\/]/
       if (value && reg.test(value)) {
-        callback('请输入正确的商家标识码！')
+        callback(this.$t('correctCode'))
       } else {
         callback()
       }
     },
     // 存储账号等
-    setCookie(name, value) {
+    setCookie(obj) {
+      // 存储信息
+      this.loginSave(obj)
+      // store.set(name, value)
       // localStorage.setItem(name, value)
-      let Days = 300
-      let exp = new Date()
-      let date = Math.round(exp.getTime() / 1000) + Days * 24 * 60 * 60
-      const cookie = {
-        url: this.url,
-        name: name,
-        value: value,
-        expirationDate: date,
-      }
-      session.defaultSession.cookies.set(cookie, (error) => {
-        if (error) console.error(error)
-      })
-    },
-    /**
-     * 获得
-     */
-    getCookies() {
-      // this.loginData = {
-      //   account: localStorage.getItem('username'),
-      //   password: localStorage.getItem('password'),
-      //   shopCode: localStorage.getItem('seller_code'),
+      // let Days = 300
+      // let exp = new Date()
+      // let date = Math.round(exp.getTime() / 1000) + Days * 24 * 60 * 60
+      // const cookie = {
+      //   url: this.url,
+      //   name: name,
+      //   value: value,
+      //   expirationDate: date,
       // }
-
-      session.defaultSession.cookies.get(
-        { url: this.url },
-        (error, cookies) => {
-          if (cookies.length > 0) {
-            this.$nextTick(() => {
-              this.loginData = {
-                account: cookies[1].name == 'username' ? cookies[1].value : '',
-                password: cookies[2].name == 'password' ? cookies[2].value : '',
-                shopCode:
-                  cookies[0].name == 'seller_code' ? cookies[0].value : '',
-              }
-            })
-          }
-        }
-      )
+      // session.defaultSession.cookies.set(cookie, (error) => {
+      //   if (error) console.error(error)
+      // })
     },
-    /**
-     * 清空缓存
-     */
+    //获取
+    getCookies() {
+      if (this.loginUserInfo) {
+        let { logoNum, account, password } = this.loginUserInfo.currentLogin
+        this.loginData = {
+          account: account,
+          password: password,
+          shopCode: logoNum,
+        }
+      }
+    },
+    // 不记住密码
     clearCookies() {
+      // store.delete('password')
       // localStorage.removeItem('username')
       // localStorage.removeItem('password')
       // localStorage.removeItem('seller_code')
-      session.defaultSession.clearStorageData(
-        {
-          origin: this.url,
-          storages: ['cookies'],
-        },
-        function(error) {
-          if (error) console.error(error)
-        }
-      )
+      // session.defaultSession.clearStorageData(
+      //   {
+      //     origin: this.url,
+      //     storages: ['cookies'],
+      //   },
+      //   function(error) {
+      //     if (error) console.error(error)
+      //   }
+      // )
     },
     getUserData(params, result) {
       this.getUserInfo({
@@ -246,9 +277,163 @@ export default {
           })
       })
     },
+    loginSave({ logoNum, account, password }) {
+      //当前登录账号信息
+      let loginUserInfo = {
+        currentLogin: {
+          logoNum,
+          account,
+          password,
+        },
+      }
+      // 获取数据查找当前商家是否存在
+      let userInfo = store.get('loginUserInfo')
+      let userInfoList = []
+      if (userInfo) {
+        userInfoList = JSON.parse(JSON.stringify(userInfo.loginInfo))
+        let isNotUserInfo = true
+        let isAccount = true
+        for (let item in userInfoList) {
+          if (
+            userInfoList[item].label === 'logoNum' &&
+            userInfoList[item].value === logoNum
+          ) {
+            isNotUserInfo = false
+            for (let val in userInfoList[item].children) {
+              if (
+                userInfoList[item].children[val].label === 'account' &&
+                userInfoList[item].children[val].value === account
+              ) {
+                isAccount = false
+                userInfoList[item].children[val].password = password
+              }
+            }
+            isAccount &&
+              userInfoList[item].children.push({
+                value: account,
+                label: 'account',
+                password: password,
+              })
+          }
+        }
+        isNotUserInfo &&
+          userInfoList.push({
+            value: logoNum,
+            label: 'logoNum',
+            children: [
+              {
+                value: account,
+                label: 'account',
+                password: password,
+              },
+            ],
+          })
+      } else {
+        // 所有账号
+        userInfoList = [
+          {
+            value: logoNum,
+            label: 'logoNum',
+            children: [
+              {
+                value: account,
+                label: 'account',
+                password: password,
+              },
+            ],
+          },
+        ]
+      }
+      loginUserInfo.loginInfo = userInfoList
+      store.set({ loginUserInfo })
+    },
+    // 商家标识框获取和失去焦点
+    shopCodeFocus() {
+      // let info = store.get('loginUserInfo')
+      if (this.loginUserInfo && this.loginUserInfo.loginInfo) {
+        this.shopCodeList = this.loginUserInfo.loginInfo
+        this.showShopCode = true
+      }
+    },
+    // shopCodeBlur() {
+    //   setTimeout(() => {
+    //     this.showShopCode = false
+    //   }, 200)
+    // },
+    getShopCode(e) {
+      if (!e.target.dataset.index) return
+      if (this.loginData.shopCode != e.target.dataset.index) {
+        this.loginData.shopCode = e.target.dataset.index
+        this.loginData.account = ''
+        this.loginData.password = ''
+      }
+      this.showShopCode = false
+    },
+    // 获取账号 获取焦点和失去焦点
+    accountFocus() {
+      // let info = store.get('loginUserInfo')
+      if (this.loginData.shopCode && this.loginUserInfo) {
+        this.loginUserInfo.loginInfo.filter((item) => {
+          return (
+            item.value === this.loginData.shopCode &&
+            (this.shopAccountList = item.children)
+          )
+        })
+        this.shopAccountList.length && (this.showAccountList = true)
+      }
+    },
+    // accountBlur() {
+    //   setTimeout(() => {
+    //     this.showAccountList = false
+    //   }, 200)
+    // },
+    accountChange() {
+      this.loginData.password = ''
+    },
+    getAccount(e) {
+      let accountAndPassword = JSON.parse(e.target.dataset.index)
+      if (!e.target.dataset.index) return
+      this.loginData.account = accountAndPassword.account
+      this.loginData.password = accountAndPassword.password
+      this.showAccountList = false
+    },
+    closeAccount(data) {
+      let userList = JSON.parse(JSON.stringify(this.loginUserInfo))['loginInfo']
+      userList.forEach((item) => {
+        if (item.value == this.loginData.shopCode) {
+          let childrens = item.children.filter((val) => {
+            return val.value != data.account
+          })
+          item.children = childrens
+          this.shopAccountList = childrens
+        }
+      })
+      this.$set(this.loginUserInfo, 'loginInfo', userList)
+      store.set({ loginUserInfo: this.loginUserInfo })
+    },
+    notClick() {
+      document.addEventListener('click', (e) => {
+        let flag = e.target.contains(
+          document.getElementsByClassName('isShopAccount')[0]
+        )
+        if (!flag) return
+        this.showAccountList = false
+      })
+      document.addEventListener('click', (e) => {
+        let flag = e.target.contains(
+          document.getElementsByClassName('isShowShopCode')[0]
+        )
+        if (!flag) return
+        this.showShopCode = false
+      })
+    },
   },
   mounted() {
+    // store.delete('loginUserInfo') // 清空存储数据
+    // console.log(store.get('loginUserInfo'), '获取得数据')
+    this.loginUserInfo = store.get('loginUserInfo') || {}
     this.getCookies()
+    this.notClick()
   },
 }
 </script>
@@ -282,6 +467,27 @@ export default {
 .remember_password {
   font-size: 10px;
   color: #ccc;
+}
+.show-shopCode {
+  background: rgba(255, 255, 255, 0.8);
+  position: absolute;
+  left: 0px;
+  top: 30px;
+  border-radius: 2px;
+  box-shadow: 0px 0px 4px 1px #ccc;
+  width: 100%;
+  z-index: 45;
+  overflow: auto;
+  max-height: 130px;
+  .shopCode-item {
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    &:hover {
+      background-color: #ededed;
+    }
+  }
 }
 /deep/.ant-input {
   font-size: 12px;

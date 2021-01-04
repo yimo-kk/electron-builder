@@ -1,4 +1,8 @@
 export default {
+  correctCode: '请输入正确的商家标识码！',
+  listViewImg: `[图片]`,
+  listViewFile: `[文件]`,
+  listViewVoice: `[语音]`,
   day: '天',
   hour: '小时',
   minute: '分钟',

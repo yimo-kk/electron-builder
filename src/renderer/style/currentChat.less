@@ -1,5 +1,7 @@
 @import './common.less';
+
 .current_chat {
+  position: relative;
   .full_height();
   background-color: @white;
 }
@@ -31,21 +33,25 @@
   font-size: 25px;
   margin-right: 10px;
   color: #848484;
+
   &:hover {
     color: #444444;
   }
 }
+
 .question_list {
   height: calc(100vh - 170px);
   overflow: auto;
   .scrollbar();
 }
+
 .question {
   line-height: 20px;
   border-radius: 3px;
   padding: 5px;
   max-width: 100%;
   .pointer();
+
   &:hover {
     color: @white;
     background-color: #1890ff;
@@ -64,10 +70,11 @@
   .pointer();
 
   &:hover {
-    color:@white;
+    color: @white;
     background-color: #1890ff;
   }
 }
+
 .menu_close {
   position: fixed;
   background-color: @white;
@@ -76,24 +83,29 @@
   font-size: 12px;
   z-index: 11;
   .pointer();
+
   p {
     padding: 5px 10px;
     border-bottom: 1px solid #ccc;
+
     &:hover {
       background-color: @LightGray;
       color: #1890ff;
     }
   }
 }
+
 .search {
   margin-bottom: 5px;
   border: 1px solid @LightGray;
 }
+
 .not_available {
   font-size: 12px;
   text-align: center;
   margin-top: 10px;
 }
+
 .current_list {
   &:hover {
     background-color: #d9d9d9;

@@ -1,31 +1,56 @@
-const appData = require("@/assets/emojis.json");
+// const appData = require("@/assets/emojis.json");
+import { emojisAmap, wChatToUi } from '@/assets/emjoy/emjoydata'
+const clipboard = require('electron').clipboard
+const nativeImg = require('electron').nativeImage
+let appData = []
 
-// 表情转化
-export function conversion (input) {
-  if (!input) return
-  const regexTab = [];
-  for (let key of Object.keys(appData)) {
-    regexTab.push({
-      regex: new RegExp(appData[key]["char"], "g"),
-      placeholder: "[em_" + key + "]"
-    });
-  }
-  for (let x of regexTab) {
-    input = input.replace(x.regex, x.placeholder);
-  }
-  return input;
+for (let key in wChatToUi) {
+  let obj = {}
+  obj[wChatToUi[key]] = key
+  obj.name = wChatToUi[key]
+  obj.oldName = key
+  appData.push(obj)
 }
+// 表情转化
+
 export function conversionFace (input) {
   if (!input) return
-  for (let key of Object.keys(appData)) {
+  appData.forEach(key => {
     let re = {
-      regex: new RegExp(`\\[em_${key}\\]`, "g"),
-      placeholder: appData[key]["char"]
+      regex: new RegExp(`\\[${key.oldName}\\]`, "g"),
+      placeholder: key.name
     }
     input = input.replace(re.regex, re.placeholder);
-  }
+  })
   return input;
 }
+// export function conversion (input) {
+//   if (!input) return
+//   const regexTab = [];
+//   for (let key of Object.keys(appData)) {
+//     regexTab.push({
+//       // regex: new RegExp(appData[key]["char"], "g"),
+//       regex: new RegExp(appData[key]["name"], "g"),
+//       placeholder: "[em_" + key + "]"
+//     });
+//   }
+//   for (let x of regexTab) {
+//     input = input.replace(x.regex, x.placeholder);
+//   }
+//   return input;
+// }
+// export function conversionFace (input) {
+//   if (!input) return
+//   for (let key of Object.keys(appData)) {
+//     let re = {
+//       regex: new RegExp(`\\[em_${key}\\]`, "g"),
+//       // placeholder: appData[key]["char"]
+//       placeholder: appData[key]["name"]
+//     }
+//     input = input.replace(re.regex, re.placeholder);
+//   }
+//   return input;
+// }
 // 校验上传图片格式
 export function isImage (str) {
   var reg = /\.(png|jpg|gif|jpeg|webp)$/;
@@ -143,4 +168,39 @@ export function compare (property) {
     var value2 = parseInt(b[property]);
     return value2 - value1;
   }
+}
+/**
+ * 数组里对象中对象的时间进行排序 高到低
+ * @param {*} property 
+ */
+export function compareTime (property, val) {
+  return function (a, b) {
+    if (!a[property] && !b[property]) return
+    var value1 = new Date(a[property][val]);
+    var value2 = new Date(b[property][val]);
+    return value2 - value1;
+  }
+}
+
+
+function convertImgToBase64 (url, callback, outputFormat) {
+  var canvas = document.createElement('CANVAS'),
+    ctx = canvas.getContext('2d'),
+    img = new Image;
+  img.crossOrigin = 'Anonymous';
+  img.onload = function () {
+    canvas.height = img.height;
+    canvas.width = img.width;
+    ctx.drawImage(img, 0, 0);
+    var dataURL = canvas.toDataURL(outputFormat || 'image/png');
+    callback.call(this, dataURL);
+    canvas = null;
+  };
+  img.src = url;
+}
+export function clipboardImg (url) {
+  convertImgToBase64(url, function (base64Image) {
+    const image = nativeImg.createFromDataURL(base64Image)
+    clipboard.writeImage(image)
+  })
 }
