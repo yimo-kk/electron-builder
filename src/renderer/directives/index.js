@@ -50,10 +50,6 @@ Vue.directive('dialogDrag', {
     const dialogHeaderEl = el.querySelector('.ant-modal-header');
     const dragDom = el.querySelector('.ant-modal');
     dialogHeaderEl.style.cssText += ';cursor:move;'
-    // dragTitleDom.style.cssText += ';-moz-user-select:none;'
-    // dragDom.style.cssText += ';top:0px;'
-    //  onselectstart="return false;" style="-moz-user-select:none;"
-    // 获取原有属性 ie dom元素.currentStyle 火狐谷歌 window.getComputedStyle(dom元素, null);
     const sty = (() => {
       if (window.document.currentStyle) {
         return (dom, attr) => dom.currentStyle[attr];
@@ -78,7 +74,6 @@ Vue.directive('dialogDrag', {
 
       const minDragDomTop = dragDom.offsetTop;
       const maxDragDomTop = screenHeight - dragDom.offsetTop - dragDomheight;
-      console.log(screenWidth, dragDomWidth, minDragDomLeft, minDragDomTop)
 
       // 获取到的值带px 正则匹配替换
       let styL = sty(dragDom, 'left');

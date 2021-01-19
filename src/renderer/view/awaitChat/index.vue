@@ -19,7 +19,7 @@
           }
         "
         :columns="columns"
-        :data-source="awaitList"
+        :data-source="$store.state.Socket.awaitList"
         :pagination="pagination"
         size="small"
         :loading="loading"
@@ -124,9 +124,6 @@ export default {
     }
   },
   computed: {
-    awaitList() {
-      return this.$store.state.Socket.awaitList
-    },
     userInfo() {
       return JSON.parse(localStorage.getItem(this.$route.query.seller_code))[
         this.$route.query.kefu_code
@@ -134,11 +131,11 @@ export default {
     },
   },
   methods: {
-    ...mapActions(['getAwaitList']), //'getCurrentListData'
+    ...mapActions(['getAwaitList']),
     ...mapMutations(['SET_AWAIT_LIST']),
     deleteDataItem(customer_id) {
       let arr = []
-      this.awaitList.forEach((item, index) => {
+      this.$store.state.Socket.awaitList.forEach((item, index) => {
         if (item.customer_id != customer_id) {
           arr.push(item)
         }
@@ -159,7 +156,7 @@ export default {
             kefu_name: that.userInfo.kefu_name,
             seller_code: that.userInfo.seller_code,
             uid: data.customer_id,
-            level: data.level,
+            level: data.level || 0,
           }
           reception(params).then((result) => {
             if (result.code != -1) {

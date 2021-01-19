@@ -8,7 +8,7 @@
     </div>
     <div v-if="currentChatList.length && !loading" class="full_height">
       <a-row class="full_height">
-        <a-col :span="5" class="chat_left">
+        <a-col :span="5" class="chat_left" ref="currentChatLeft">
           <div
             v-for="(item, index) in currentChatList"
             :key="item.uid"
@@ -199,6 +199,7 @@ import ChatBox from '@/components/chatBox/chatBox'
 import CurrentOperation from './component/currentOperation'
 import Multitap from './component/multitap'
 import common from '@/mixins/common'
+import { elementScrollTop } from '@/utils/libs'
 import {
   getUserChatLog,
   closeChat,
@@ -207,12 +208,7 @@ import {
   searchSellerWord,
 } from '@/api/current.js'
 import { mapMutations, mapActions } from 'vuex'
-import {
-  conversionFace,
-  compressImage,
-  isImage,
-  // conversion,
-} from '@/utils/libs.js'
+import { compressImage, isImage } from '@/utils/libs.js'
 export default {
   name: 'CurrentChat',
   mixins: [common()],
@@ -252,23 +248,11 @@ export default {
     }
   },
   computed: {
-    closeUsers() {
-      return this.$store.state.Socket.closeUsers
-    },
-    userMessage() {
-      return this.$store.state.Socket.userMessage
-    },
-    refuseMessage() {
-      return this.$store.state.Socket.refuseMessage
-    },
     currentUser() {
       return this.$store.state.Socket.currentUser
     },
     currentChatList() {
       return this.$store.state.Socket.currentChatList
-    },
-    serviceMsg() {
-      return this.$store.state.Socket.serviceMsg
     },
     userInfo() {
       return JSON.parse(localStorage.getItem(this.$route.query.seller_code))[
@@ -278,9 +262,14 @@ export default {
   },
   watch: {
     // 收到用户发来消息
-    userMessage: {
+    '$store.state.Socket.userMessage': {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
+        // 防止收到消息后没有当前用户，重新拉去数据
+        !this.currentChatList.some((item) => {
+          return data.from_name == item.username
+        }) && this.getCurrentListData()
+
         if (data.from_name == this.currentUser.activtyeUsername) {
           this.$socket.emit('message', {
             cmd: 'serviceReadMsg',
@@ -292,7 +281,7 @@ export default {
             data.progress_num = 0
           }
           data.type === 0 &&
-            (data.message = conversionFace(data.content || data.message))
+            (data.message = this.conversionFace(data.content || data.message))
           data.create_time = data.createtime
           this.currentChatLogList.push(data)
         }
@@ -311,17 +300,20 @@ export default {
           }
         })
         Object.keys(firstData).length && newCurrentChatList.unshift(firstData)
+        let currentChatelement = document.getElementsByClassName('chat_left')[0]
+        elementScrollTop(currentChatelement)
+
         this.SET_CURRENT_CHAT_LIST(newCurrentChatList)
       },
       deep: true,
     },
-    serviceMsg: {
+    '$store.state.Socket.serviceMsg': {
       handler(newVal) {
         let my_send = JSON.parse(JSON.stringify(newVal))
         if (newVal.from_name == this.userInfo.kefu_name) {
           newVal.type === 3 && (my_send.message.play = false)
           newVal.type === 0 &&
-            (my_send.message = conversionFace(newVal.message))
+            (my_send.message = this.conversionFace(newVal.message))
           if (newVal.type === 2) {
             my_send.progress_num = 0
           }
@@ -343,24 +335,14 @@ export default {
           }
         })
         Object.keys(firstData).length && newCurrentChatList.unshift(firstData)
-        // let newCurrentChatList = JSON.parse(
-        //   JSON.stringify(this.currentChatList)
-        // ).map((item) => {
-        //   if (item.username == this.currentUser.activtyeUsername) {
-        //     item.lastMsg = {
-        //       content: my_send.message,
-        //       create_time: my_send.create_time,
-        //       type: my_send.type,
-        //     }
-        //   }
-        //   return item
-        // })
+        let currentChatelement = document.getElementsByClassName('chat_left')[0]
+        elementScrollTop(currentChatelement)
         this.SET_CURRENT_CHAT_LIST(newCurrentChatList)
       },
       deep: true,
     },
     //转接接受或拒绝
-    refuseMessage: {
+    '$store.state.Socket.refuseMessage': {
       handler(newVal) {
         if (newVal.type) {
           if (newVal.kefu_code === this.userInfo.kefu_code) {
@@ -423,23 +405,31 @@ export default {
             seller_code: this.userInfo.seller_code,
           })
         }
+        this.isTextToSpeech = false
       },
       deep: true,
     },
-    closeUsers: {
+    '$store.state.Socket.closeUsers': {
       handler(newVal) {
-        if (newVal.message.length) {
-          let arr = newVal.message.map((item) => {
-            this.autoCloseChat(item.uid, item.username)
-            return item.uid
-          })
+        if (newVal.message && Object.keys(newVal.message).length) {
           let currentList = JSON.parse(
             JSON.stringify(this.currentChatList)
-          ).filter((ele) => {
-            return !arr.includes(ele.uid)
+          ).filter((item) => {
+            return item.uid != newVal.message.uid
           })
+          !this.currentChatList.some((item) => {
+            return newVal.from_name == item.username
+          }) && this.autoCloseChat(newVal.message.uid, newVal.message.username)
           this.SET_CURRENT_CHAT_LIST(currentList)
         }
+      },
+      deep: true,
+    },
+    // 监听需要更新快捷回复列表
+    '$store.state.Socket.newWords': {
+      handler(newVal) {
+        this.userInfo.seller_code == newVal.seller_code &&
+          this.getSellerWordList()
       },
       deep: true,
     },
@@ -516,8 +506,8 @@ export default {
           let array = result.data.map((item) => {
             if (item.type == 0) {
               item.content
-                ? (item.content = conversionFace(item.content))
-                : (item.message = conversionFace(item.message))
+                ? (item.content = this.conversionFace(item.content))
+                : (item.message = this.conversionFace(item.message))
             } else if (item.type === 2) {
               item.progress = false
               item.progress_num = 0
@@ -602,6 +592,7 @@ export default {
         },
       })
     },
+    //快捷回复列表
     getSellerWordList() {
       getSellerWordList({
         seller_id: this.userInfo.seller_id,
@@ -747,7 +738,6 @@ export default {
     speedySennd(val) {
       this.searchKeyword = ''
       this.isSearchList = false
-      // this.sendMessage(val, 0)
       this.text = val
     },
     getLog(e, fn) {
@@ -809,18 +799,22 @@ export default {
           console.log(err)
         })
     },
-  },
-  mounted() {
-    let oldArr = JSON.parse(JSON.stringify(this.currentChatList))
-    this.getCurrentList()
-    document.addEventListener('click', (e) => {
+    menuClick(e) {
       // 下面这句代码是获取 点击的区域是否包含你的菜单，如果包含，说明点击的是菜单以外，不包含则为菜单以内
       let flag = e.target.contains(
         document.getElementsByClassName('menu_close')[0]
       )
       if (flag) return
       this.close = false
-    })
+    },
+  },
+  mounted() {
+    let oldArr = JSON.parse(JSON.stringify(this.currentChatList))
+    this.getCurrentList()
+    document.addEventListener('click', this.menuClick)
+  },
+  destroyed() {
+    document.removeEventListener('click', this.menuClick)
   },
 }
 </script>

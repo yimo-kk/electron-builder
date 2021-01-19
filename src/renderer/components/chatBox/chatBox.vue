@@ -55,10 +55,14 @@
                   item.state == 1 || !isName ? item.from_name : item.nickname
                 }}</span>
                 <div class="chat_content chat_content_left">
-                  <div v-if="item.type === 0" class="flex">
+                  <div
+                    v-if="item.type === 0"
+                    class="flex"
+                    style="white-space: pre-line;"
+                  >
                     <p
                       style="word-break: break-word;"
-                      v-html="parsingEmoji(item.content || item.message)"
+                      v-html="conversionFace(item.content || item.message)"
                     >
                       <!-- {{ item.content || item.message }} -->
                     </p>
@@ -142,9 +146,9 @@
                 }}</span>
                 <div class="chat_content chat_content_right">
                   <p
-                    style=";word-break: break-word;"
+                    style=";word-break: break-word;white-space: pre-line;"
                     v-if="item.type === 0"
-                    v-html="parsingEmoji(item.content || item.message)"
+                    v-html="conversionFace(item.content || item.message)"
                   >
                     <!-- {{ item.content || item.message }} -->
                   </p>
@@ -265,31 +269,13 @@
             ></customIcon>
           </p>
         </div>
-
-        <a-textarea
-          v-model.trim="sendText"
-          :placeholder="$t('currentInfo.pleaseEnter')"
-          style="height:75px"
-          @input="inputText"
-          @keydown="enter"
-        />
-        <div class="send">
-          <a-checkbox @change="textToSpeech" v-show="!isName">
-            {{ $t('textToSpeech') }}
-          </a-checkbox>
-          <p
-            :class="['send_btn', sendText.length ? 'activt_btn' : '']"
-            @click="sendMessage(sendText, 0)"
-            :title="
-              `Enter  ${$t('currentInfo.send')}
-Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
-            "
-          >
-            {{ $t('currentInfo.send') }}
-          </p>
-        </div>
-        <!--  表情区域 -->
-
+        <InputBox_
+          ref="InputBox_"
+          :isName="isName"
+          :valueConten="sendText"
+          @textToSpeech="textToSpeech"
+          @sendMessage="sendMessage"
+        ></InputBox_>
         <div v-show="faceShow">
           <div
             class="mask"
@@ -300,24 +286,17 @@ Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
               }
             "
           ></div>
-          <div class="browBox">
-            <ul>
-              <li
-                v-html="parsingEmoji(item.name)"
-                v-for="(item, index) in faceList"
-                :key="index"
-                @click.stop="getBrow(index)"
-              ></li>
-
-              <!-- <li
-                v-for="(item, index) in faceList"
-                :key="index"
-                @click.stop="getBrow(index)"
-              >
-                {{ item.char }} 
-                {{ item }}
-              </li> -->
-            </ul>
+          <div class="browBoxs flex_center">
+            <div class="browBox">
+              <ul>
+                <li
+                  v-html="faceHtml(item)"
+                  v-for="(item, index) in faceList"
+                  :key="index"
+                  @click.stop="getBrow(item)"
+                ></li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -407,15 +386,10 @@ Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
 </template>
 
 <script>
-import { emojisAmap, wChatToUi } from '../../assets/emjoy/emjoydata'
+import { emojisAmap } from '../../assets/face/index'
 const { dialog } = require('electron').remote
 const path = require('path')
-import {
-  conversionFace,
-  // conversion,
-  isImage,
-  clipboardImg,
-} from '@/utils/libs.js'
+import { isImage, clipboardImg } from '@/utils/libs.js'
 import Recorder from 'js-audio-recorder'
 const recorder = new Recorder({
   sampleBits: 8, // 采样位数，支持 8 或 16，默认是16
@@ -425,8 +399,7 @@ const recorder = new Recorder({
 import { serviceSendChatFile, uploadVoice } from '@/api/current.js'
 const appData = require('@/assets/emojis.json')
 import Audio from './audio'
-
-import InputBox from './inputBox'
+import InputBox_ from './inputBox'
 import chat from '@/mixins/chat'
 import popup from '../popup/popup'
 const electron = require('electron')
@@ -515,7 +488,7 @@ export default {
   components: {
     Audio,
     popup,
-    InputBox,
+    InputBox_,
   },
   data() {
     return {
@@ -541,7 +514,6 @@ export default {
       sendFiletoHead: '',
       sendFiletoName: '',
       currentsendData: null,
-      // inputValue: { txt: '明天约吗？[E415]' },
       insertion: '',
     }
   },
@@ -583,63 +555,25 @@ export default {
     },
     chatLogList: {
       handler(newVal, old) {
-        this.chatLogListData = newVal
+        this.chatLogListData = JSON.parse(JSON.stringify(newVal))
         this.isMore == false && this.messageDown()
       },
     },
-    sendText(newVal) {
-      if (!newVal) return
-      // var str = conversion(newVal)
-      var str = newVal
-      if (str.length >= 240) {
-        this.$message.error(this.$t('overLimit'))
-        var string = str.slice(0, 240)
-        var arr = string.split('[')
-        arr.forEach((item, index) => {
-          if (index > 0 && item.indexOf(']') === -1) {
-            arr.pop()
-          }
-        })
-        //  this.sendText = conversionFace(arr.join('['))
-        this.sendText = arr.join('[')
-      } else {
-        // this.sendText = conversionFace(str)
-      }
-    },
     text(newVal) {
       this.sendText = JSON.parse(JSON.stringify(newVal))
-    },
-    activityGroup: {
-      handler(newVal) {
-        if (Object.keys(newVal).length) {
-          this.sendText = ''
-        }
-      },
-      deep: true,
     },
   },
   methods: {
     inputText(val) {
       this.$emit('inputText', val.target.value)
     },
-    enter(event) {
-      if ((event.keyCode === 13 && event.ctrlKey) || event.altKey) {
-        this.sendText += '\n'
-      } else if (event.keyCode === 13 && event.shiftKey) {
-        // shitt+回车自带换行
-      } else if (event.keyCode === 13) {
-        event.preventDefault()
-        this.sendMessage(this.sendText, 0)
-      }
-    },
     sendMessage(content, type) {
       this.sendType = type
-      if (!this.sendText && this.sendType === 0) {
+      if (this.sendType === 0 && !content) {
         this.$message.error(this.$t('sendAir'))
         return
       }
       this.$emit('sendMessage', content, type)
-      this.sendText = ''
     },
     uploadImage(file, drag) {
       this.$emit('uploadImage', drag ? file : file.file, 1)
@@ -666,50 +600,14 @@ export default {
     // 获取表情
     faceContent() {
       this.faceShow = !this.faceShow
-      if (this.faceShow == true) {
-        // this.faceList = Object.keys(emojisAmap).map((item) => {
-        //   return `[${item}]`
-        // })
-        // this.faceList.push(...Object.values(wChatToUi))
-        for (let key in emojisAmap) {
-          let obj = {}
-          obj[key] = emojisAmap[key]
-          obj.name = `[${key}]`
-          obj.oldName = key
-          this.faceList.push(obj)
-        }
-        for (let key in wChatToUi) {
-          let obj = {}
-          obj[wChatToUi[key]] = key
-          obj.name = wChatToUi[key]
-          obj.oldName = key
-          this.faceList.push(obj)
-        }
-      } else {
-        this.faceList = []
-      }
-      // if (this.faceShow == true) {
-      //   for (let i in appData) {
-      //     appData[i].name = i
-      //     this.faceList.push(appData[i])
-      //   }
-      // } else {
-      //   this.faceList = []
-      // }
+      this.faceShow == true
+        ? (this.faceList = Object.values(emojisAmap))
+        : (this.faceList = [])
     },
     // 获取用户点击表情之后的标签 ，存放到输入框内
-    getBrow(index) {
-      for (let i in this.faceList) {
-        if (index == i) {
-          // this.inputValue.txt += this.faceList[index]
-          // this.insertion = this.faceList[index]
-          // this.getBrowString = this.faceList[index].char
-          // this.sendText += this.getBrowString
-          this.sendText += `[${this.faceList[index].oldName}]`
-        }
-      }
+    getBrow(val) {
+      this.$refs.InputBox_.insertEmoji(val)
     },
-
     // 来的消息显示在最下面
     messageDown() {
       if (this.chatLogListData.length && this.isMore == false) {
@@ -868,7 +766,7 @@ export default {
     // 解除禁言
     removeforbid() {
       this.isHeadPortrait = false
-      let { state, from_name, kefu_code } = this.selectUser
+      let { state, from_name, from_id, kefu_code } = this.selectUser
       let params = []
       if (state) {
         params = [
@@ -876,10 +774,11 @@ export default {
             kefu_code,
             username: from_name,
             type: state,
+            uid: from_id,
           },
         ]
       } else {
-        params = [{ username: from_name }]
+        params = [{ uid: from_id, username: from_name }]
       }
       this.$emit('removeforbid', params)
     },
@@ -1017,33 +916,34 @@ export default {
     logMore() {
       // 滚动到顶部 加载更多
       let chatDoc = this.$refs.chatMain
-      chatDoc.addEventListener('scroll', (e) => {
-        if (
-          e.target.scrollTop === 0 &&
-          e.target.scrollHeight > e.target.offsetHeight &&
-          !(this.chatLogListData.length >= this.count) &&
-          !this.isMore
-        ) {
-          this.$emit('getLog', e)
-        }
-      })
+      chatDoc.addEventListener('scroll', this.wacthScroll)
+    },
+    wacthScroll(e) {
+      if (
+        e.target.scrollTop === 0 &&
+        e.target.scrollHeight > e.target.offsetHeight &&
+        !(this.chatLogListData.length >= this.count) &&
+        !this.isMore
+      ) {
+        this.$emit('getLog', e)
+      }
     },
     dragIn() {
-      !this.isName &&
-        this.$refs.chatBody.addEventListener('drop', (e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          this.currentsendData = e.dataTransfer.files[0]
+      !this.isName && this.$refs.chatBody.addEventListener('drop', this.isDrop)
+    },
+    isDrop(e) {
+      e.preventDefault()
+      e.stopPropagation()
+      this.currentsendData = e.dataTransfer.files[0]
 
-          if (!this.currentsendData) {
-            return
-          }
-          this.sendFilePopup = true
-          this.sendFileType = this.isImageTo(this.currentsendData.type) ? 1 : 2
-          this.sendFileName = this.currentsendData.name
-          this.sendFiletoHead = ''
-          this.sendFiletoName = this.currentUser.activtyeUsername
-        })
+      if (!this.currentsendData) {
+        return
+      }
+      this.sendFilePopup = true
+      this.sendFileType = this.isImageTo(this.currentsendData.type) ? 1 : 2
+      this.sendFileName = this.currentsendData.name
+      this.sendFiletoHead = ''
+      this.sendFiletoName = this.currentUser.activtyeUsername
     },
     fileSendEnsure() {
       this.sendFilePopup = false
@@ -1067,7 +967,7 @@ export default {
     },
     // 当选择文字转语音
     textToSpeech(e) {
-      this.$emit('textToSpeech', e.target.checked)
+      this.$emit('textToSpeech', e)
     },
     isImageTo(str) {
       var reg = /(png|jpg|gif|jpeg|webp)$/
@@ -1082,6 +982,12 @@ export default {
     this.downloadProcess()
     this.changeImageSize()
     this.dragIn()
+  },
+  destroyed() {
+    this.$refs.viewImage &&
+      this.$refs.viewImage.removeEventListener('wheel', this.changeImg, true)
+    this.$refs.chatMain &&
+      this.$refs.chatMain.removeEventListener('scroll', this.wacthScroll)
   },
 }
 </script>

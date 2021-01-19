@@ -68,7 +68,7 @@ instance.interceptors.response.use(
           Message.error(res.data.msg || '请求资源不存在')
           break
         case 500:
-          Message.error(res.data.msg || '服务器开小差啦')
+          // Message.error(res.data.msg || '服务器开小差啦')
           break
         case 504:
           Message.error(res.data.msg || '网络请求失败')

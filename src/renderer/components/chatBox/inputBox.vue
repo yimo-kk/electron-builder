@@ -1,231 +1,430 @@
 <template>
-  <div>
-    <div class="other flex_up_down_center">
-      <customIcon
-        :title="$t('currentInfo.expression')"
-        type="icon-biaoqing1"
-        style="fontSize: 20px; padding: 8px 0 0 8px"
-        @click="faceContent"
-      ></customIcon>
-    </div>
+  <div class="inputBox2">
     <div
-      ref="inputBox"
-      class="input-box"
+      :placeholder="$t('currentInfo.pleaseEnter')"
+      id="input"
+      ref="inputBox_edit"
       contenteditable="true"
-      v-html="parsingEmoji(innerText)"
-      @input="changeTxt"
-      @focus="lock = true"
-      @blur="lock = false"
+      v-html="nodeValue"
+      @paste="setPasteImg"
+      @contextmenu="setMenuPasteImg"
+      @keydown="enter"
+      @blur="getblur"
     ></div>
     <div class="send">
-      <a-checkbox @change="textToSpeech" v-show="false">
+      <a-checkbox @change="textToSpeech" v-show="!isName">
         {{ $t('textToSpeech') }}
       </a-checkbox>
       <p
-        :class="['send_btn', innerText.length ? 'activt_btn' : '']"
-        @click="sendMessage(innerText, 0)"
+        :class="['send_btn']"
+        @click="sendMessage"
         :title="
-          `Enter  ${$t('currentInfo.send')}
-Enter+Ctrl/Shift  ${$t('currentInfo.wrap')}`
+          `
+Ctrl/Shift+Enter ${$t('currentInfo.wrap')}`
         "
       >
-        {{ $t('currentInfo.send') }}
+        {{ $t('currentInfo.send') }}S
       </p>
-    </div>
-    <!-- 表情区域 -->
-    <div v-show="faceShow">
-      <div
-        class="mask"
-        @click="
-          () => {
-            faceShow = false
-            faceList = []
-          }
-        "
-      ></div>
-      <div class="browBox">
-        <ul>
-          <li
-            v-html="parsingEmoji(item)"
-            v-for="(item, index) in faceList"
-            :key="index"
-            @click.stop="getBrow(index)"
-          ></li>
-          <!-- <li v-html=""></li> wChatToUi -->
-          <!-- <li
-                v-for="(item, index) in faceList"
-                :key="index"
-                @click.stop="getBrow(index)"
-              >
-                {{ item.char }}
-              </li> -->
-        </ul>
-      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { emojisAmap, wChatToUi } from '@/assets/emjoy/emjoydata'
+import { isImage } from '../../utils/libs'
+const { remote } = require('electron')
+const clipboard = require('electron').clipboard
+
 export default {
-  name: 'InputBox',
+  name: 'inputBox2',
+  components: {},
   props: {
-    inputValue: {
-      type: Object,
-      default() {
-        return {
-          txt: '',
-        }
-      },
+    isName: {
+      type: Boolean,
+      default: false,
     },
-    insertion: {
+    valueConten: {
       type: String,
+      default: '',
     },
   },
-  data: function() {
+  data() {
     return {
-      innerText: this.inputValue.txt,
-      lock: false,
-      faceShow: false,
-      faceList: [],
-      lastEditRange: null,
+      nodeValue: this.valueConten,
+      setMenuPasteImgData: '',
+      sel: null,
+      range: null,
     }
   },
+  computed: {},
   watch: {
-    inputValue: {
-      handler(newValue, oldValue) {
-        if (!this.lock) {
-          this.innerText = this.inputValue.txt
+    valueConten(newVal) {
+      this.nodeValue = JSON.parse(JSON.stringify(newVal))
+    },
+    nodeValue(newVal) {
+      this.$nextTick(() => {
+        this.nodeValue = newVal ? newVal : ''
+      })
+    },
+    '$store.state.Socket.activityGroup': {
+      handler(newVal) {
+        if (Object.keys(newVal).length) {
+          document.getElementById('input').innerHTML = ''
         }
       },
       deep: true,
     },
-    // insertion(val) {
-    //   this.insertHtmlAtCaret(val)
-    // },
   },
   methods: {
-    changeTxt: function(e) {
-      this.inputValue.txt = this.$el.innerHTML
+    /**
+     * 获取div内容并转为Node数组
+     * @param elem
+     * @returns {ChildNode[]}
+     */
+    getNodeList() {
+      return Array.from(this.$refs.inputBox_edit.childNodes)
     },
-    _insertimg(str) {
-      var selection = window.getSelection
-        ? window.getSelection()
-        : document.selection
-      this.$refs.inputBox.focus()
-      if (this.lastEditRange) {
-        // 存在最后光标对象，选定对象清除所有光标并添加最后光标还原之前的状态
-        selection.removeAllRanges()
-        selection.addRange(this.lastEditRange)
+    // 获取光标位置
+    getCursorCoordinate() {
+      const selection = window.getSelection().getRangeAt(0)
+      return selection
+    },
+    setMenuPasteImg() {
+      this.setMenuPasteImgData.popup(
+        { window: remote.getCurrentWindow() },
+        false
+      )
+    },
+    //
+    setPasteImg(event) {
+      event.preventDefault()
+      if (event.clipboardData || event.originalEvent) {
+        var clipboardData =
+          event.clipboardData || event.originalEvent.clipboardData
+        if (Object.keys(clipboardData.files).length) {
+          var blob
+          for (var i = 0; i < clipboardData.items.length; i++) {
+            if (clipboardData.items[i].type.indexOf('image') !== -1) {
+              blob = clipboardData.items[i].getAsFile()
+            }
+          }
+          var render = new FileReader()
+          let _this = this
+          render.onload = function(evt) {
+            //输出base64编码
+            var base64 = evt.target.result
+            var img = document.createElement('img')
+            img.setAttribute('src', base64)
+            img.setAttribute('style', 'max-width:120px; max-height:90px')
+            _this.$refs.inputBox_edit.focus()
+            _this.insertHtmlAtCaret(img)
+          }
+          render.readAsDataURL(blob)
+        } else {
+          var text
+          // 兼容针对于opera ie等浏览器
+          if (clipboardData === undefined || clipboardData === null) {
+            text = window.clipboardData.getData('text') || ''
+            if (text !== '') {
+              if (window.getSelection) {
+                // 针对于ie11 10 9 safari
+                var newNode = document.createElement('span')
+                newNode.innerHTML = text
+                window
+                  .getSelection()
+                  .getRangeAt(0)
+                  .insertNode(newNode)
+              } else {
+                // 兼容ie10 9 8 7 6 5
+                document.selection.createRange().pasteHTML(text)
+              }
+            }
+          } else {
+            // 兼容chorme或hotfire
+            text = clipboardData.getData('text/plain') || ''
+            if (text !== '') {
+              document.execCommand('insertText', false, text)
+            }
+          }
+        }
       }
-      var range = selection.createRange
-        ? selection.createRange()
-        : selection.getRangeAt(0)
-      if (!window.getSelection) {
-        var selection = window.getSelection
-          ? window.getSelection()
-          : document.selection
-        var range = selection.createRange
-          ? selection.createRange()
-          : selection.getRangeAt(0)
-        range.pasteHTML(str)
-        range.collapse(false)
-        range.select()
-      } else {
-        var hasR = range.createContextualFragment(str)
-        var hasR_lastChild = hasR.lastChild
-        while (
-          hasR_lastChild &&
-          hasR_lastChild.nodeName.toLowerCase() == 'br' &&
-          hasR_lastChild.previousSibling &&
-          hasR_lastChild.previousSibling.nodeName.toLowerCase() == 'br'
+    },
+    // 插入文字和图片
+    insertHtmlAtCaret(html) {
+      document.getElementById('input').focus()
+      let range, sel
+      if (window.getSelection) {
+        sel = window.getSelection()
+        if (sel.getRangeAt && sel.rangeCount) {
+          range = sel.getRangeAt(0)
+          range.deleteContents()
+          let el = document.createElement('div')
+          el.appendChild(html)
+          var frag = document.createDocumentFragment(),
+            node,
+            lastNode
+          while ((node = el.firstChild)) {
+            lastNode = frag.appendChild(node)
+          }
+          range.insertNode(frag)
+          if (lastNode) {
+            range = range.cloneRange()
+            range.setStartAfter(lastNode)
+            range.collapse(true)
+            sel.removeAllRanges()
+            sel.addRange(range)
+          }
+        }
+      }
+    },
+    // 插入表情
+    insertEmoji(val) {
+      document.getElementById('input').focus()
+      this.insertHtml(this.faceHtml(val))
+    },
+    // 选中文字转语音
+    textToSpeech(e) {
+      this.$emit('textToSpeech', e.target.checked)
+    },
+    // 发送
+    sendMessage() {
+      let sendMessage = ''
+      let sendImg = ''
+      this.getNodeList().forEach((item, index) => {
+        if (
+          item.nodeName == '#text' ||
+          item.nodeName == 'BR' ||
+          item.nodeName == 'SPAN'
         ) {
-          var e = hasR_lastChild
-          hasR_lastChild = hasR_lastChild.previousSibling
-          hasR.removeChild(e)
+          sendMessage +=
+            item.nodeName == 'BR'
+              ? '\n'
+              : item.nodeName == 'SPAN'
+              ? `[${item.dataset.name}]`
+              : item.data
+          if (this.getNodeList()[index + 1]) {
+            if (!this.getNodeList()[index + 1].nodeName == '#text') {
+              this.$emit('sendMessage', this.sendText(sendMessage), 0)
+              sendMessage = ''
+            }
+          } else {
+            if (sendMessage.trim()) {
+              this.$emit('sendMessage', this.sendText(sendMessage), 0)
+              sendMessage = ''
+            } else {
+              this.$message.error('发送内容不能为空！')
+            }
+          }
+        } else if (item.nodeName == 'IMG') {
+          sendMessage &&
+            this.$emit('sendMessage', this.sendText(sendMessage), 0)
+          sendMessage = ''
+          this.$emit('sendMessage', item.currentSrc, 1)
+          sendImg = ''
         }
-        range.insertNode(hasR)
-        if (hasR_lastChild) {
-          range.setEndAfter(hasR_lastChild)
-          range.setStartAfter(hasR_lastChild)
-        }
-        range.collapse(false)
-        selection.removeAllRanges()
-        selection.addRange(range)
-      }
-      // 无论如何都要记录最后光标对象
-      this.lastEditRange = selection.getRangeAt(0)
+      })
+      document.getElementById('input').innerHTML = ''
     },
-    faceContent() {
-      this.faceShow = !this.faceShow
-      if (this.faceShow == true) {
-        this.faceList = Object.keys(emojisAmap).map((item) => {
-          return `[${item}]`
-        })
-        this.faceList.push(...Object.values(wChatToUi))
+    enter(event) {
+      if (event.keyCode === 13 && event.shiftKey) {
+        // shitt+回车自带换行
+      } else if (event.keyCode === 13) {
+        event.preventDefault()
+        this.sendMessage()
+      }
+    },
+    getblur() {
+      this.sel = window.getSelection()
+      this.range = this.sel.getRangeAt(0)
+      this.range.deleteContents()
+    },
+    //插入表情
+    insertHtml(html) {
+      if (this.sel) {
+        if (this.sel.getRangeAt && this.sel.rangeCount) {
+          var el = document.createElement('div')
+          el.innerHTML = html
+          var frag = document.createDocumentFragment(),
+            node,
+            lastNode
+          while ((node = el.firstChild)) {
+            lastNode = frag.appendChild(node)
+          }
+          this.range.insertNode(frag)
+          if (lastNode) {
+            this.range = this.range.cloneRange()
+            this.range.setStartAfter(lastNode)
+            this.range.collapse(true)
+            this.sel.removeAllRanges()
+            this.sel.addRange(this.range)
+          }
+        }
       } else {
-        this.faceList = []
-      }
-    },
-    // 获取用户点击表情之后的标签 ，存放到输入框内
-    getBrow(index) {
-      for (let i in this.faceList) {
-        if (index == i) {
-          // this.inputValue.txt += this.faceList[index]
-          this._insertimg2(this.parsingEmoji(this.faceList[index]))
+        let sel = window.getSelection(),
+          range
+        if (sel.getRangeAt && sel.rangeCount) {
+          sel.collapseToEnd()
+          range = sel.getRangeAt(0)
+          range.deleteContents()
+          var el = document.createElement('span')
+          el.innerHTML = html
+          var frag = document.createDocumentFragment(),
+            node,
+            lastNode
+          while ((node = el.firstChild)) {
+            lastNode = frag.appendChild(node)
+          }
+          range.insertNode(frag)
+          if (lastNode) {
+            range = range.cloneRange()
+            range.setStartAfter(lastNode)
+            range.collapse(true)
+            sel.removeAllRanges()
+            sel.addRange(range)
+          }
         }
       }
     },
-    textToSpeech() {},
+    sendText(newVal) {
+      if (!newVal) return
+      var str = newVal
+      if (str.length >= 240) {
+        this.$message.error(this.$t('overLimit'))
+        var string = str.slice(0, 240)
+        var arr = string.split('[')
+        arr.forEach((item, index) => {
+          if (index > 0 && item.indexOf(']') === -1) {
+            arr.pop()
+          }
+        })
+
+        return arr.join('[')
+      } else {
+        return newVal
+      }
+    },
   },
-  mounted() {},
+  created() {},
+  mounted() {
+    var downloadImgtext = [
+      {
+        label: '粘贴',
+        click: () => {
+          if (clipboard.availableFormats().includes('image/png')) {
+            let image = new clipboard.readImage()
+            var img = document.createElement('img')
+            img.setAttribute('src', image.toDataURL())
+            img.setAttribute('style', 'max-width:120px; max-height:90px')
+            this.insertHtmlAtCaret(img)
+          } else if (
+            clipboard.availableFormats().includes('text/html') ||
+            clipboard.availableFormats().includes('text/plain')
+          ) {
+            let clipboardText = clipboard.readText()
+            for (let i = 0; i < clipboardText.length; i++) {
+              let textNode = document.createElement('input')
+              textNode.type = 'button'
+              textNode.value = clipboardText.charAt(i)
+              this.insertHtmlAtCaret(textNode)
+            }
+          }
+        },
+      },
+    ]
+    this.setMenuPasteImgData = remote.Menu.buildFromTemplate(downloadImgtext)
+  },
 }
 </script>
 <style lang="less" scoped>
-.input-box {
-  height: 80px;
-  width: 100%;
-  background: #fff;
-  padding-left: 8px;
-}
-[contenteditable]:focus {
-  outline: none;
-}
-
-.browBox {
-  width: 400px;
+@import '@/style/common.less';
+.inputBox2 {
   height: 200px;
-  background: #fff;
-  position: absolute;
-  top: -220px;
-  left: -90px;
-  overflow: auto;
-  box-shadow: 0px 0px 10px #ccc;
-  z-index: 2222;
-  // .scrollbar();
+}
+#input {
+  padding: 0 10px;
+  border: #7f7f7f;
+  height: calc(100% - 120px);
+  overflow-y: auto;
+  outline: none;
+  width: 100%;
+  color: #000;
+  font-size: 14px;
+  font-family: 微软雅黑, serif;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-x: hidden;
 
-  ul {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 10px;
+  .file {
+    cursor: default;
+    height: 45px;
+    padding: 5px 10px;
+    width: 300px;
+    position: relative;
+    border: 0.5px solid #d0d0d0;
+    border-radius: 3px;
 
-    li {
-      width: 10%;
-      font-size: 15px;
-      list-style: none;
-      text-align: center;
-      // .pointer();
+    &:hover {
+      background: #d0cecd;
+    }
+
+    .el-icon-close {
+      position: absolute;
+      top: 3px;
+      right: 5px;
+      cursor: pointer;
+      color: #969696;
+
+      &:hover {
+        color: #6b6b6b;
+      }
+    }
+
+    .el-icon-document {
+      color: #969696;
+      font-size: 40px;
+      float: left;
+    }
+
+    .info {
+      margin-left: 15px;
+      font-size: small;
+      float: left;
+
+      p {
+        margin: 0;
+      }
     }
   }
 }
+.send {
+  position: absolute;
+  top: 120px;
+  bottom: 10px;
+  right: 10px;
 
-.mask {
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(156, 153, 153, 0.2);
-  z-index: 11;
-  position: fixed;
-  top: 0;
-  left: 0;
+  /deep/ .ant-checkbox + span {
+    padding-left: 0;
+    color: #ccc;
+  }
+
+  .send_btn {
+    display: inline-block;
+    width: 50px;
+    height: 30px;
+    text-align: center;
+    line-height: 30px;
+    background: @LightGray;
+    border-radius: 5px;
+    .pointer();
+  }
+
+  .activt_btn {
+    background-color: #1890ff;
+    color: @white;
+  }
+}
+
+#input:empty::before {
+  color: lightgrey;
+  content: attr(placeholder);
 }
 </style>

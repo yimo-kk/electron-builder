@@ -1,29 +1,28 @@
-// const appData = require("@/assets/emojis.json");
-import { emojisAmap, wChatToUi } from '@/assets/emjoy/emjoydata'
+
 const clipboard = require('electron').clipboard
 const nativeImg = require('electron').nativeImage
-let appData = []
 
-for (let key in wChatToUi) {
-  let obj = {}
-  obj[wChatToUi[key]] = key
-  obj.name = wChatToUi[key]
-  obj.oldName = key
-  appData.push(obj)
-}
-// 表情转化
+// let appData = []
+// for (let key in wChatToUi) {
+//   let obj = {}
+//   obj[wChatToUi[key]] = key
+//   obj.name = wChatToUi[key]
+//   obj.oldName = key
+//   appData.push(obj)
+// }
+// // 表情转化
 
-export function conversionFace (input) {
-  if (!input) return
-  appData.forEach(key => {
-    let re = {
-      regex: new RegExp(`\\[${key.oldName}\\]`, "g"),
-      placeholder: key.name
-    }
-    input = input.replace(re.regex, re.placeholder);
-  })
-  return input;
-}
+// export function conversionFace (input) {
+//   if (!input) return
+//   appData.forEach(key => {
+//     let re = {
+//       regex: new RegExp(`\\[${key.oldName}\\]`, "g"),
+//       placeholder: key.name
+//     }
+//     input = input.replace(re.regex, re.placeholder);
+//   })
+//   return input;
+// }
 // export function conversion (input) {
 //   if (!input) return
 //   const regexTab = [];
@@ -175,7 +174,7 @@ export function compare (property) {
  */
 export function compareTime (property, val) {
   return function (a, b) {
-    if (!a[property] && !b[property]) return
+    if (!a[property] || !b[property]) return
     var value1 = new Date(a[property][val]);
     var value2 = new Date(b[property][val]);
     return value2 - value1;
@@ -203,4 +202,34 @@ export function clipboardImg (url) {
     const image = nativeImg.createFromDataURL(base64Image)
     clipboard.writeImage(image)
   })
+}
+/**
+ * 滚动条回到顶部
+ * @param {*} element 
+ */
+export function elementScrollTop (element) {
+  let timer = setInterval(function () {
+    var scrollTop = element.scrollTop
+    var ispeed = Math.floor(-scrollTop / 6)
+    if (scrollTop == 0) {
+      clearInterval(timer)
+    }
+    element.scrollTop = scrollTop + ispeed
+  }, 30)
+}
+// 获取url参数
+export function getQueryString (name) {
+  var args = {};
+  var query = location.href.split('?');
+  var pairs = query[query.length - 1].split('&');
+  for (let i = 0; i < pairs.length; i++) {
+    var pos = pairs[i].indexOf('=');
+    if (pos === -1) continue;
+    var name = pairs[i].substring(0, pos);
+    var value = pairs[i].substring(pos + 1);
+    value = decodeURIComponent(value);
+    args[name] = value;
+  }
+  return args;
+
 }

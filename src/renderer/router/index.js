@@ -14,6 +14,7 @@ Router.prototype.push = function push (location, onResolve, onReject) {
   return originalPush.call(this, location).catch((err) => err);
 };
 const router = new Router({
+  model: history,
   routes: routers,
 });
 router.beforeEach((to, from, next) => {

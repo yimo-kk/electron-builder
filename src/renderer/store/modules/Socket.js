@@ -1,6 +1,6 @@
 // import electron from 'electron'
 import { getGroupList } from "@/api/group.js";
-import { isArr, deleteListValue, compare, compareTime } from "@/utils/libs.js";
+import { isArr, deleteListValue, compare, compareTime, getQueryString } from "@/utils/libs.js";
 import Toast from '@/components/Toast/toast'
 import router from '@/router'
 import { getCustomerQueue } from "@/api/await.js";
@@ -21,8 +21,12 @@ const state = {
     is_invite: null,
     on_file: 0,
     on_voice: 0,
+    isAdmin: false,
     img: ''
   },
+  // userInfoV: router,//JSON.parse(localStorage.getItem(router.query.seller_code))[
+  //   router.query.kefu_code
+  // ],
   chatTime: 0, // 聊天信息是否每条显示时间
   userMessage: {}, // 客服收到用户消息
   relinkMessage: {}, // 客服收到转接消息
@@ -46,6 +50,10 @@ const state = {
   pullUsersGroup: [], // 拉人进群
   saveNickname: {}, // 修改群成员昵称
   closeUsers: {}, // 自动关闭长时间为回复的用户
+  newWords: {}, // 更新快捷回复
+  removeblack: {},
+  removeforbid: {},
+  saveGroup: {},
 }
 const getters = {
   currentNum (state) {
@@ -78,6 +86,11 @@ const mutations = {
   // 客服修改群成员昵称
   SOCKET_saveNickname: (state, data) => {
     state.saveNickname = data
+  },
+  //当快捷回复更新了执行重新获取新数据
+  SOCKET_saveWords: (state, data) => {
+    data.createTime = new Date().getTime()
+    state.newWords = data
   },
   // 长时间用户没回复自动删除该用户
   SOCKET_closeUsers: (state, data) => {
@@ -144,15 +157,22 @@ const mutations = {
   // 群更新
   SOCKET_saveGroup: (state, data) => {
     // 有这个群数据改变了
+    state.saveGroup = data
+    let kefu_id
+    Object.keys(getQueryString()) &&
+      (kefu_id = JSON.parse(localStorage.getItem(getQueryString().seller_code))[
+        getQueryString().kefu_code
+      ].kefu_id)
     let arr = JSON.parse(JSON.stringify(state.chatList))
     let list = arr.map(item => {
       if (item.group_id === data.group_id) {
-        let { group_avatar, group_name, is_invite, on_file, on_voice } = data
+        let { group_avatar, group_name, is_invite, on_file, on_voice, kefu_ids } = data
         item.group_avatar = group_avatar
         item.group_name = group_name
         item.is_invite = is_invite
         item.on_file = on_file
         item.on_voice = on_voice
+        item.isAdmin = kefu_ids.includes(kefu_id.toString())
       }
       return item
     })
@@ -162,10 +182,9 @@ const mutations = {
       state.activityGroup.on_file = data.on_file
       state.activityGroup.on_voice = data.on_voice
       state.activityGroup.img = data.group_avatar
+      state.activityGroup.isAdmin = data.kefu_ids.includes(kefu_id.toString())
     }
     state.chatList = list
-
-
   },
   // 拉人进群
   // 管理员拉人进群 
@@ -194,7 +213,7 @@ const mutations = {
   },
   // 个人提示解除拉黑
   SOCKET_removeblack: (state, data) => {
-    state.userBlack = data
+    state.removeblack = data
   },
   // 禁言全局提示
   SOCKET_groupForbid: (state, data) => {
@@ -206,7 +225,7 @@ const mutations = {
   },
   // 提示个人解禁
   SOCKET_removeforbid: (state, data) => {
-    state.userForbid = data
+    state.removeforbid = data
   },
   // 踢出群
   SOCKET_kickGroup: (state, data) => {
@@ -227,7 +246,8 @@ const mutations = {
         is_invite: state.chatList[0].is_invite,
         on_file: state.chatList[0].on_file,
         on_voice: state.chatList[0].on_voice,
-        img: state.chatList[0].group_avatar
+        img: state.chatList[0].group_avatar,
+        isAdmin: state.chatList[0].isAdmin
       }
     }
 
@@ -309,6 +329,7 @@ const mutations = {
     state.activityGroup.activityTitle = ""
     state.activityGroup.is_invite = null
     state.activityGroup.img = ''
+    state.activityGroup.isAdmin = false
     state.userMessage = {} // 客服收到用户消息
     state.relinkMessage = {} // 客服收到转接消息
     state.refuseMessage = {} // 转接是否被接受

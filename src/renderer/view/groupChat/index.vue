@@ -43,7 +43,7 @@
             @removeblack="sendBlackMessage"
             @removeforbid="sendForbidMessage"
             @uploadFile="uploadFile"
-            :isAdmin="isAdmin"
+            :isAdmin="activityGroup.isAdmin"
             :on_file="activityGroup.on_file"
             :on_voice="activityGroup.on_voice"
             :isMore="isMore"
@@ -53,15 +53,24 @@
           ></ChatBox>
         </div>
       </a-col>
-      <a-col :span="rightNum">
+      <a-col :span="rightNum" style="    height: 100%;">
         <transition name="bounce">
-          <div v-show="rightNum">
+          <div
+            v-show="rightNum"
+            style="height: 100%;display: flex;flex-direction: column;justify-content: space-between;"
+          >
             <a-tabs type="card" v-model="activtTabs">
               <a-tab-pane key="1" :tab="$t('groupInfo.groupMember')">
                 <div v-show="isGroupList" style="textAlign: center">
                   <a-spin tip />
                 </div>
-                <div :class="['group_list', isAdmin ? '' : 'list_height']">
+                <div
+                  :class="[
+                    'group_list',
+                    activityGroup.isAdmin ? '' : 'list_height',
+                    isOther ? 'other-max' : 'other-min',
+                  ]"
+                >
                   <div v-if="groupList.length && !isGroupList">
                     <div style="marginBottom:20px">
                       <a-checkbox-group
@@ -146,7 +155,15 @@
                 </div>
               </a-tab-pane>
             </a-tabs>
-            <a-collapse accordion v-show="isAdmin">
+            <a-collapse
+              accordion
+              v-show="activityGroup.isAdmin"
+              @change="
+                () => {
+                  isOther = !isOther
+                }
+              "
+            >
               <a-collapse-panel
                 :header="$t('currentInfo.otherOperations')"
                 :key="1"
@@ -343,12 +360,8 @@ import editMemberInfo from './component/editMemberInfo'
 import addBalckTime from './component/addBalckTime'
 import common from '@/mixins/common'
 import { mapMutations, mapActions, mapState } from 'vuex'
-import {
-  conversionFace,
-  compressImage,
-  isImage,
-  // conversion,
-} from '@/utils/libs.js'
+import { elementScrollTop } from '@/utils/libs'
+import { compressImage, isImage } from '@/utils/libs.js'
 import {
   getGroupChatLog,
   getGroupUsersList,
@@ -387,7 +400,6 @@ export default {
       notGroupList: [],
       selectAddList: [],
       addGroupListUser: [],
-      isAdmin: false,
       page: 1,
       count: 0,
       isAddBlack: false,
@@ -405,47 +417,18 @@ export default {
       hour: 0,
       minute: 0,
       permanent: false,
+      isOther: false,
     }
   },
   computed: {
     chatList() {
       return this.$store.state.Socket.chatList
     },
-    groupMessage() {
-      return this.$store.state.Socket.groupMessage
-    },
     activityGroup() {
       return this.$store.state.Socket.activityGroup
     },
-    groupBlack() {
-      return this.$store.state.Socket.groupBlack
-    },
-    userBlack() {
-      return this.$store.state.Socket.userBlack
-    },
-    groupForbid() {
-      return this.$store.state.Socket.groupForbid
-    },
-    userForbid() {
-      return this.$store.state.Socket.userForbid
-    },
-    kickGroup() {
-      return this.$store.state.Socket.kickGroup
-    },
-    userJoin() {
-      return this.$store.state.Socket.userJoin
-    },
     pullUsersGroup() {
       return this.$store.state.Socket.pullUsersGroup
-    },
-    userLeave() {
-      return this.$store.state.Socket.userLeave
-    },
-    kefuOnline() {
-      return this.$store.state.Socket.kefuOnline
-    },
-    kefuLeave() {
-      return this.$store.state.Socket.kefuLeave
     },
     saveNickname() {
       return this.$store.state.Socket.saveNickname
@@ -457,7 +440,7 @@ export default {
     },
   },
   watch: {
-    groupMessage: {
+    '$store.state.Socket.groupMessage': {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
         if (data.group_id == this.activityGroup.activityId) {
@@ -466,32 +449,31 @@ export default {
             group_id: this.activityGroup.activityId,
             kefu_id: this.userInfo.kefu_id,
           })
-          data.type === 3 && (data.message.play = false)
-          if (data.type === 2) {
-            data.progress_num = 0
-          }
           data.type === 0 &&
-            (data.message = conversionFace(data.content || data.message))
+            (data.message = this.conversionFace(data.content || data.message))
+          data.type === 2 && (data.progress_num = 0)
+          data.type === 3 && (data.message.play = false)
           data.create_time = newVal.createtime
-          let firstData = {}
-          let newGroupChatList = []
-          JSON.parse(JSON.stringify(this.chatList)).forEach((item) => {
-            if (item.group_id == data.group_id) {
-              item.lastMsg = {
-                content: data.message,
-                create_time: data.createtime,
-                type: data.type,
-              }
-              firstData = item
-            } else {
-              newGroupChatList.push(item)
-            }
-          })
-          newGroupChatList.unshift(firstData)
-          this.SET_CHAT_LIST(newGroupChatList)
-
           this.chatLogList.push(data)
         }
+        let firstData = {}
+        let newGroupChatList = []
+        JSON.parse(JSON.stringify(this.chatList)).forEach((item) => {
+          if (item.group_id == data.group_id) {
+            item.lastMsg = {
+              content: data.message,
+              create_time: data.createtime,
+              type: data.type,
+            }
+            firstData = item
+          } else {
+            newGroupChatList.push(item)
+          }
+        })
+        newGroupChatList.unshift(firstData)
+        this.SET_CHAT_LIST(newGroupChatList)
+        let currentChatelement = document.getElementsByClassName('chat_left')[0]
+        elementScrollTop(currentChatelement)
       },
       deep: true,
     },
@@ -499,73 +481,79 @@ export default {
       handler(newVal) {
         let arr = JSON.parse(JSON.stringify(newVal))
         arr.forEach((item, index) => {
-          item.value = ++this.groupList.length
-          // item.nickname = eval('(' + item.nickname + ')')
+          item.value = item.username
+          item.nickname = item.username
         })
         this.groupList.push(...arr)
       },
       deep: true,
     },
     // 拉黑
-    groupBlack: {
+    '$store.state.Socket.groupBlack': {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
-        data.forbid = 'forbid'
-        this.chatLogList.push(data)
-        this.getGroupMemberList({
-          group_id: this.activityGroup.activityId,
-          seller_code: this.userInfo.seller_code,
-        })
+        this.operateGroup(data, 'list_id', true)
       },
       deep: true,
     },
-    userBlack: {
+    '$store.state.Socket.removeblack': {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
-        data.forbid = 'forbid'
-        this.chatLogList.push(data)
-        this.getGroupMemberList({
-          group_id: this.activityGroup.activityId,
-          seller_code: this.userInfo.seller_code,
-        })
+        this.operateGroup(data, 'list_id', false)
       },
       deep: true,
     },
-    userForbid: {
+    '$store.state.Socket.userBlack': {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
         data.forbid = 'forbid'
         this.chatLogList.push(data)
-        this.getGroupMemberList({
-          group_id: this.activityGroup.activityId,
-          seller_code: this.userInfo.seller_code,
-        })
+        // this.getGroupMemberList({
+        //   group_id: this.activityGroup.activityId,
+        //   seller_code: this.userInfo.seller_code,
+        // })
       },
       deep: true,
     },
     // 禁言
-    groupForbid: {
+    '$store.state.Socket.groupForbid': {
+      handler(newVal) {
+        let data = JSON.parse(JSON.stringify(newVal))
+        this.operateGroup(data, 'forbid_id', true)
+      },
+      deep: true,
+    },
+    //解禁
+    '$store.state.Socket.removeforbid': {
+      handler(newVal) {
+        let data = JSON.parse(JSON.stringify(newVal))
+        this.operateGroup(data, 'forbid_id', false)
+      },
+      deep: true,
+    },
+    '$store.state.Socket.userForbid': {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
         data.forbid = 'forbid'
         this.chatLogList.push(data)
-        this.getGroupMemberList({
-          group_id: this.activityGroup.activityId,
-          seller_code: this.userInfo.seller_code,
-        })
+        // this.getGroupMemberList({
+        //   group_id: this.activityGroup.activityId,
+        //   seller_code: this.userInfo.seller_code,
+        // })
       },
       deep: true,
     },
     // 踢出群
-    kickGroup: {
+    '$store.state.Socket.kickGroup': {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
         data.forbid = 'forbid'
         this.chatLogList.push(data)
-        this.getGroupMemberList({
-          group_id: this.activityGroup.activityId,
-          seller_code: this.userInfo.seller_code,
-        })
+        if (this.activityGroup.activityId == newVal.group_id && this.rightNum) {
+          this.groupList = this.groupList.filter((item, index) => {
+            return item.username != newVal.username && item.uid != newVal.uid
+          })
+        }
       },
       deep: true,
     },
@@ -583,26 +571,44 @@ export default {
       },
       deep: true,
     },
-    userJoin: {
+    '$store.state.Socket.userJoin': {
       handler(newVal) {
-        this.getGroupMemberList({
-          group_id: this.activityGroup.activityId,
-          seller_code: this.userInfo.seller_code,
-        })
-      },
-      deep: true,
-    },
-    kefuOnline: {
-      handler(newVal) {
-        this.activityGroup.activityId &&
-          this.getGroupMemberList({
-            group_id: this.activityGroup.activityId,
-            seller_code: this.userInfo.seller_code,
+        if (this.activityGroup.activityId == newVal.group_id && this.rightNum) {
+          let isExist = this.groupList.some((item) => {
+            return item.username != newVal.username && item.uid != newVal.uid
           })
+          if (isExist) {
+            let data = JSON.parse(JSON.stringify(newVal))
+            data.value = data.username + data.uid
+            this.groupList.push(data)
+          }
+        }
       },
       deep: true,
     },
-    userLeave: {
+    //客服上线
+    '$store.state.Socket.kefuOnline': {
+      handler(newVal) {
+        let data = JSON.parse(JSON.stringify(newVal))
+        let isExist = this.groupList.some((item) => {
+          return data.username == item.username && item.uid == newVal.kefu_id
+        })
+        if (this.activityGroup.activityId && !isExist) {
+          data.groupKefu.forEach((item) => {
+            if (this.activityGroup.activityId == item.group_id) {
+              data.group_id = item.group_id
+              data.isAdmin = item.isAdmin
+            }
+          })
+          data.type = 1
+          data.value = data.username
+          data.uid = data.kefu_id
+          this.groupList.unshift(data)
+        }
+      },
+      deep: true,
+    },
+    '$store.state.Socket.userLeave': {
       handler(newVal) {
         this.groupList.forEach((item, index) => {
           if (
@@ -615,7 +621,7 @@ export default {
       },
       deep: true,
     },
-    kefuLeave: {
+    '$store.state.Socket.kefuLeave': {
       handler(newVal) {
         this.groupList.forEach((item, index) => {
           if (item.kefu_code && newVal.kefu_code == item.kefu_code) {
@@ -640,6 +646,20 @@ export default {
           }
           return item
         })
+      },
+      deep: true,
+    },
+    '$store.state.Socket.saveGroup': {
+      handler(newVal) {
+        let data = JSON.parse(JSON.stringify(newVal))
+        if (this.activityGroup.activityId == data.group_id && this.rightNum) {
+          this.groupList = this.groupList.map((item) => {
+            if (item.type) {
+              item.isAdmin = data.kefu_ids.includes(item.uid.toString())
+            }
+            return item
+          })
+        }
       },
       deep: true,
     },
@@ -706,6 +726,7 @@ export default {
         on_file: data.on_file,
         on_voice: data.on_voice,
         img: data.group_avatar,
+        isAdmin: data.isAdmin,
       })
       this.chatLogList = []
       this.checkedList = []
@@ -725,12 +746,11 @@ export default {
       getGroupChatLog(data)
         .then((result) => {
           this.count = result.count
-          this.isAdmin = result.isAdmin
           let array = result.data.map((item) => {
             if (item.type == 0) {
               item.content
-                ? (item.content = conversionFace(item.content))
-                : (item.message = conversionFace(item.message))
+                ? (item.content = this.conversionFace(item.content))
+                : (item.message = this.conversionFace(item.message))
             } else if (item.type == 2) {
               item.progress_num = 0
             } else if (item.type == 3) {
@@ -762,9 +782,8 @@ export default {
         .then((result) => {
           this.isGroupList = false
           if (result.code === 0) {
-            this.groupList = result.data.map((item, index) => {
-              item.value = index
-              // item.nickname = eval('(' + item.nickname + ')')
+            this.groupList = result.data.map((item) => {
+              item.value = item.username + item.uid
               return item
             })
           }
@@ -807,18 +826,6 @@ export default {
         okText: that.$t('determine'),
         ancelText: that.$t('cancel'),
         onOk() {
-          // let arr = that.handleGroupUser.map((item) => {
-          //   if (item.type == 1) {
-          //     return {
-          //       kefu_code: item.kefu_code,
-          //       username: item.username,
-          //       type: item.type,
-          //       uid: item.uid,
-          //     }
-          //   } else {
-          //     return { username: item.username, uid: item.uid }
-          //   }
-          // })
           let list = that.handleGroupUser.filter((item) => {
             if (item.type == 1) {
               return (
@@ -846,18 +853,6 @@ export default {
       this.isAddBlack = true
       this.stopSpeakData = data
     },
-    //禁言
-    // stopSpeak(arr) {
-    //   this.$socket.emit('message', {
-    //     cmd: 'forbid',
-    //     seller_code: this.userInfo.seller_code,
-    //     group_id: this.activityGroup.activityId,
-    //     username: arr,
-    //     from_name: this.userInfo.kefu_name,
-    //   })
-    //   this.handleGroupUser = []
-    //   this.checkedList = []
-    // },
     // 批量解禁
     removeforbid() {
       if (this.handleGroupUser.length <= 0) {
@@ -871,17 +866,6 @@ export default {
         okText: that.$t('determine'),
         cancelText: that.$t('cancel'),
         onOk() {
-          // let arr = that.handleGroupUser.map((item) => {
-          //   if (item.type == 1) {
-          //     return {
-          //       kefu_code: item.kefu_code,
-          //       username: item.username,
-          //       type: item.type,
-          //     }
-          //   } else {
-          //     return { username: item.username }
-          //   }
-          // })
           let list = that.handleGroupUser.filter((item) => {
             if (item.type == 1) {
               return (
@@ -939,6 +923,7 @@ export default {
               return {
                 ip: item.login_ip,
                 username: item.username,
+                type: item.type ? item.type : 0,
                 uid: item.uid,
               }
             }
@@ -1078,10 +1063,6 @@ export default {
         cmd: 'kick-group',
       })
       this.handleGroupUser = []
-      this.getGroupMemberList({
-        group_id: this.activityGroup.activityId,
-        seller_code: this.userInfo.seller_code,
-      })
       this.checkedList = []
     },
     getNotGroupUsersList(val = '') {
@@ -1143,11 +1124,9 @@ export default {
       return list
     },
     onChangeCheckbox(vals) {
-      let arr = []
-      vals.forEach((item) => {
-        arr.push(this.groupList[item])
+      this.handleGroupUser = this.groupList.filter((item) => {
+        return vals.includes(`${item.username}${item.uid}`)
       })
-      this.handleGroupUser = arr
     },
     onChangeAddList(vals) {
       this.selectList = this.addGroupList.filter((item) => {
@@ -1189,6 +1168,7 @@ export default {
               on_file: this.chatList[0].on_file,
               on_voice: this.chatList[0].on_voice,
               img: this.chatList[0].group_avatar,
+              isAdmin: this.chatList[0].isAdmin,
             })
             let arr = JSON.parse(JSON.stringify(this.chatList))
             arr[0].noReadNum = 0
@@ -1219,6 +1199,7 @@ export default {
                     on_file: item.on_file,
                     on_voice: item.on_voice,
                     img: item.group_avatar,
+                    isAdmin: item.isAdmin,
                   })
                 }
               }
@@ -1238,14 +1219,15 @@ export default {
     },
     updateInfo(e) {
       if (!e.target.dataset.index) return
-      if (
-        !this.groupList[e.target.dataset.index].kefu_code ||
-        !this.groupList[e.target.dataset.index].type
-      ) {
+      let obj = {}
+      this.groupList.forEach((item) => {
+        item.username == e.target.dataset.index && (obj = item)
+      })
+      if (!obj.kefu_code || !obj.type) {
         this.isHeadPortrait = true
         this.left = e.pageX
         this.top = e.pageY
-        this.updateUser = this.groupList[e.target.dataset.index]
+        this.updateUser = obj
       }
     },
     ensure() {
@@ -1273,6 +1255,18 @@ export default {
         //把菜单模板添加到右键菜单
         m.popup({ window: remote.getCurrentWindow() })
       })
+    },
+    operateGroup(data, opt, bool) {
+      data.forbid = 'forbid'
+      this.chatLogList.push(data)
+      if (this.activityGroup.activityId == data.group_id && this.rightNum) {
+        this.groupList = this.groupList.map((item) => {
+          if (item.uid == data.uid && item.username == data.username) {
+            item[opt] = bool
+          }
+          return item
+        })
+      }
     },
   },
   mounted() {

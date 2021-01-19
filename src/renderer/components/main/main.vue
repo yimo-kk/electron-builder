@@ -118,34 +118,15 @@ export default {
     }
   },
   computed: {
-    relinkMessage() {
-      return this.$store.state.Socket.relinkMessage
-    },
-    userMessage() {
-      return this.$store.state.Socket.userMessage
-    },
-    refuseMessage() {
-      return this.$store.state.Socket.refuseMessage
-    },
-    groupMessage() {
-      return this.$store.state.Socket.groupMessage
-    },
     awaitList() {
       return this.$store.state.Socket.awaitList
     },
     currentChatList() {
       return this.$store.state.Socket.currentChatList
     },
-    groupChatNum() {
-      return this.$store.state.Socket.groupChatNum
-    },
-    oldUser() {
-      return this.$store.state.Socket.oldUser
-    },
     chatList() {
       return this.$store.state.Socket.chatList
     },
-
     userInfo() {
       return (
         this.$route.query.seller_code &&
@@ -204,11 +185,12 @@ export default {
             on_file: 0,
             on_voice: 0,
             img: '',
+            isAdmin: false,
           })
       },
       deep: true,
     },
-    oldUser: {
+    '$store.state.Socket.oldUser': {
       handler(newVal) {
         this.play()
         this.$electron.ipcRenderer.send('message_prompt')
@@ -243,7 +225,7 @@ export default {
       },
     },
     // 收到转接
-    relinkMessage: {
+    '$store.state.Socket.relinkMessage': {
       handler(newVal) {
         let val = JSON.parse(JSON.stringify(newVal))
         if (val.kefu_code == this.userInfo.kefu_code) {
@@ -302,7 +284,7 @@ export default {
       deep: true,
     },
     // 收到用户发来消息
-    userMessage: {
+    '$store.state.Socket.userMessage': {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
         // 消息声音提示和任务栏闪烁
@@ -331,7 +313,7 @@ export default {
       },
       deep: true,
     },
-    groupMessage: {
+    '$store.state.Socket.groupMessage': {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
         if (data.from_name !== this.userInfo.kefu_name) {
@@ -368,7 +350,6 @@ export default {
       'SET_CURRENT_USER',
       'SET_CURRENT_CHAT_LIST',
       'SET_CURRENT_CHAT_LIST_PUSH',
-      'SET_GROUP_CHAT_NUM',
       'SET_STATUS',
       'SET_ACTIVITY_GROUP',
       'SET_CHAT_TIME',
@@ -411,6 +392,7 @@ export default {
         cmd: 'service-status',
         kefu_code: this.userInfo.kefu_code,
         kefu_id: this.userInfo.kefu_id,
+        login_ip: this.userInfo.login_ip,
         seller_code: this.userInfo.seller_code,
         username: this.userInfo.kefu_name,
         headimg: this.userInfo.kefu_avatar,
@@ -425,7 +407,6 @@ export default {
     },
     polling() {
       let timeOut = null
-
       timeOut = setInterval(() => {
         if (this.$route.query.seller_code) {
           this.$socket.emit('message', {

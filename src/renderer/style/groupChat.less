@@ -1,8 +1,10 @@
 @import './common.less';
+
 .groupChat {
   background-color: @white;
   .full_height();
 }
+
 .list_loading {
   text-align: center;
   background: rgba(0, 0, 0, 0.05);
@@ -11,15 +13,19 @@
   padding: 30px 50px;
   margin: 20px 0;
 }
+
 .activt_item {
   background-color: #ccc;
 }
+
 .hover_item {
   padding: 5px;
+
   &:hover {
     background-color: #d9d9d9;
   }
 }
+
 .chat_content {
   border-left: 1px solid @LightGray;
   border-right: 1px solid @LightGray;
@@ -27,6 +33,7 @@
   flex-direction: column;
   .full_height();
 }
+
 .chat_left {
   // padding: 10px;
   .full_height();
@@ -34,41 +41,59 @@
   overflow: auto;
   .scrollbar();
 }
+
 .more {
   font-size: 25px;
   margin-right: 10px;
   color: #848484;
+
   &:hover {
     color: #444444;
   }
 }
+
 .member_item {
   background-color: #ccc;
 }
+
 .list_height {
   max-height: 80vh !important;
 }
+
 .group_list {
-  min-height: 40vh;
-  max-height: 45vh;
+  // min-height: 40vh;
+  // max-height: 45vh;
   overflow: auto;
   .scrollbar();
 }
+
+.other-max {
+  height: calc(100vh - 315px);
+}
+
+.other-min {
+  height: calc(100vh - 160px);
+}
+
 .checkboxLabel {
   display: flex;
   align-items: center;
+
   .group_list_item {
     display: flex;
+
     .headimg {
       width: 30px;
       height: 30px;
       border-radius: 4px;
     }
   }
+
   .group_list_item_username {
     padding-left: 10px;
   }
 }
+
 .info {
   .title {
     padding: 0 10px;
@@ -87,26 +112,32 @@
     }
   }
 }
+
 .remark_content {
   border: 1px solid @LightGray;
   border-radius: 10px;
   margin: 10px;
 }
+
 .is_stop_speak {
   margin-left: 20px;
   color: #ccc;
 }
+
 .other {
   overflow: auto;
   max-height: 130px;
   .scrollbar();
 }
-.time_style{
+
+.time_style {
   margin-bottom: 10px;
 }
-.remark_and_time{
+
+.remark_and_time {
   width: 100px;
 }
+
 /deep/ .ant-checkbox-group-item {
   display: flex;
   align-items: center;

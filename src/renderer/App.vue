@@ -16,14 +16,14 @@
           }"
           :percent="percentage"
         />
-        <a-steps
+        <!-- <a-steps
           progress-dot
           :current="1"
           direction="vertical"
           style="marginTop:10px"
         >
           <a-step title="更新内容"> </a-step>
-        </a-steps>
+        </a-steps> -->
         <!-- 当前版本更新日志 -->
         <!-- <div class="steps_content">
           <ul>
@@ -104,6 +104,7 @@ export default {
           cmd: 'service-status',
           kefu_code: userInfo.kefu_code,
           kefu_id: userInfo.kefu_id,
+          login_ip: userInfo.login_ip,
           seller_code: userInfo.seller_code,
           username: userInfo.kefu_name,
           headimg: userInfo.kefu_avatar,

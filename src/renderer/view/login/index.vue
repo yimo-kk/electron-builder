@@ -14,6 +14,7 @@
           <!--    @blur="shopCodeBlur" -->
           <a-input
             @focus="shopCodeFocus"
+            @blur="shopCodeBlur"
             v-model="loginData.shopCode"
             :placeholder="$t('login.pleaseShopCode')"
             allowClear
@@ -32,6 +33,10 @@
               class="shopCode-item isShowShopCode"
             >
               {{ item.value }}
+              <a-icon
+                type="close-circle"
+                @click.stop="closeShopCode(item.value)"
+              />
             </p>
           </div>
         </a-form-item>
@@ -39,6 +44,7 @@
           <!--  @blur="accountBlur" -->
           <a-input
             @focus="accountFocus"
+            @blur="accountBlur"
             v-model="loginData.account"
             :placeholder="$t('login.pleaseAccount')"
             allowClear
@@ -134,6 +140,27 @@ export default {
     showAccountList(val) {
       val && (this.showShopCode = !val)
     },
+    'loginData.account'(newVal, oldVal) {
+      let isShopAccount = this.loginUserInfo.loginInfo.some((item) => {
+        return (
+          item.value == this.loginData.shopCode &&
+          item.children.some((val) => {
+            return val.value == newVal
+          })
+        )
+      })
+      if (!isShopAccount) {
+        this.loginData.password = ''
+      } else {
+        this.shopAccountList.forEach((item) => {
+          if (item.value == this.loginData.shopCode) {
+            item.children.forEach((val) => {
+              val.account == newVal && (this.loginData.password = val.password)
+            })
+          }
+        })
+      }
+    },
   },
   methods: {
     ...mapActions(['handleLogin', 'getUserInfo']),
@@ -164,13 +191,13 @@ export default {
             .then((result) => {
               if (result.code === 0) {
                 if (values.remember) {
-                  this.setCookie({
+                  this.loginSave({
                     logoNum: params.seller_code,
                     account: params.username,
                     password: params.password,
                   })
                 } else {
-                  this.setCookie(params.seller_code, params.username, '')
+                  this.loginSave(params.seller_code, params.username, '')
                 }
                 this.$message.success(result.msg)
                 this.getUserData(params, result)
@@ -203,28 +230,9 @@ export default {
         callback()
       }
     },
-    // 存储账号等
-    setCookie(obj) {
-      // 存储信息
-      this.loginSave(obj)
-      // store.set(name, value)
-      // localStorage.setItem(name, value)
-      // let Days = 300
-      // let exp = new Date()
-      // let date = Math.round(exp.getTime() / 1000) + Days * 24 * 60 * 60
-      // const cookie = {
-      //   url: this.url,
-      //   name: name,
-      //   value: value,
-      //   expirationDate: date,
-      // }
-      // session.defaultSession.cookies.set(cookie, (error) => {
-      //   if (error) console.error(error)
-      // })
-    },
     //获取
     getCookies() {
-      if (this.loginUserInfo) {
+      if (Object.keys(this.loginUserInfo).length) {
         let { logoNum, account, password } = this.loginUserInfo.currentLogin
         this.loginData = {
           account: account,
@@ -277,6 +285,7 @@ export default {
           })
       })
     },
+    // 存储账号等
     loginSave({ logoNum, account, password }) {
       //当前登录账号信息
       let loginUserInfo = {
@@ -349,17 +358,23 @@ export default {
     },
     // 商家标识框获取和失去焦点
     shopCodeFocus() {
-      // let info = store.get('loginUserInfo')
       if (this.loginUserInfo && this.loginUserInfo.loginInfo) {
         this.shopCodeList = this.loginUserInfo.loginInfo
         this.showShopCode = true
       }
     },
-    // shopCodeBlur() {
-    //   setTimeout(() => {
-    //     this.showShopCode = false
-    //   }, 200)
-    // },
+    shopCodeBlur() {
+      if (this.loginUserInfo.loginInfo) {
+        let isExist = this.loginUserInfo.loginInfo.some((item) => {
+          return this.loginData.shopCode == item.value
+        })
+        if (!isExist) {
+          this.shopAccountList = []
+          this.loginData.account = ''
+          this.loginData.password = ''
+        }
+      }
+    },
     getShopCode(e) {
       if (!e.target.dataset.index) return
       if (this.loginData.shopCode != e.target.dataset.index) {
@@ -371,8 +386,8 @@ export default {
     },
     // 获取账号 获取焦点和失去焦点
     accountFocus() {
-      // let info = store.get('loginUserInfo')
-      if (this.loginData.shopCode && this.loginUserInfo) {
+      this.showShopCode = false
+      if (this.loginData.shopCode && Object.keys(this.loginUserInfo).length) {
         this.loginUserInfo.loginInfo.filter((item) => {
           return (
             item.value === this.loginData.shopCode &&
@@ -382,11 +397,11 @@ export default {
         this.shopAccountList.length && (this.showAccountList = true)
       }
     },
-    // accountBlur() {
-    //   setTimeout(() => {
-    //     this.showAccountList = false
-    //   }, 200)
-    // },
+    accountBlur() {
+      !this.shopAccountList.some((item) => {
+        return item.value == this.loginData.account
+      }) && (this.loginData.password = '')
+    },
     accountChange() {
       this.loginData.password = ''
     },
@@ -397,6 +412,7 @@ export default {
       this.loginData.password = accountAndPassword.password
       this.showAccountList = false
     },
+    // 删除 账号
     closeAccount(data) {
       let userList = JSON.parse(JSON.stringify(this.loginUserInfo))['loginInfo']
       userList.forEach((item) => {
@@ -405,9 +421,29 @@ export default {
             return val.value != data.account
           })
           item.children = childrens
+          if (data.account == this.loginData.account) {
+            this.loginData.account = ''
+            this.loginData.password = ''
+          }
           this.shopAccountList = childrens
         }
       })
+      this.$set(this.loginUserInfo, 'loginInfo', userList)
+      store.set({ loginUserInfo: this.loginUserInfo })
+    },
+    // 删除商家标识
+    closeShopCode(shopCode) {
+      let userList = JSON.parse(JSON.stringify(this.loginUserInfo))[
+        'loginInfo'
+      ].filter((item) => {
+        return item.value != shopCode
+      })
+      if (shopCode == this.loginData.shopCode) {
+        this.loginData.shopCode = ''
+        this.loginData.account = ''
+        this.loginData.password = ''
+      }
+      this.shopCodeList = userList
       this.$set(this.loginUserInfo, 'loginInfo', userList)
       store.set({ loginUserInfo: this.loginUserInfo })
     },

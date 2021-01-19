@@ -176,17 +176,82 @@
   z-index: 33;
 }
 
+// .brows {
+//       position: absolute;
+//       border-radius: 5px;
+//       box-shadow: 1px 1px 10px #7f7f7f;
+//       top: -285px;
+//       left: 0;
+//       width: 460px;
+//       height: 290px;
+//       padding: 0 8px;
+//       background-color: #fff;
+//       border: 0.5px solid #bbbbbb;
+
+//       .brow {
+//         height: 210px;
+//         padding-left: 5px;
+//         margin-top: 20px;
+//         overflow-y: auto;
+//       }
+
+//       .select {
+//         position: absolute;
+//         bottom: 0;
+//         left: 0;
+//         width: calc(100% - 1px);
+//         background: rgb(245, 245, 245);
+
+//         ul {
+//           margin: 0;
+//           padding: 0;
+
+//           li {
+//             cursor: pointer;
+//             padding: 10px 17.5px;
+
+//             &:hover {
+//               background: rgb(245, 245, 245);
+//             }
+//           }
+//         }
+//       }
+
+//       ul {
+//         padding: 5px 5px;
+//         margin: 0;
+
+//         li {
+//           cursor: default;
+//           float: left;
+//           font-size: large;
+
+//           &:hover {
+//             background-color: rgb(231, 231, 231);
+//           }
+//         }
+//       }
+//     }
+.browBoxs {
+  // position: absolute;
+  border-radius: 5px;
+  border: 0.5px solid #bbbbbb;
+  box-shadow: 1px 1px 10px #7f7f7f;
+  position: absolute;
+  top: -205px;
+  left: -90px;
+  width: 420px;
+  height: 230px;
+  background-color: #fff;
+  z-index: 2222;
+}
+
 .browBox {
   width: 400px;
   height: 200px;
   background: @white;
-  position: absolute;
-  top: -205px;
-  left: -90px;
   overflow: auto;
-  box-shadow: 0px 0px 10px #ccc;
-  z-index: 2222;
-  padding: 10px 0 10px 10px;
+
   .scrollbar();
 
   ul {
@@ -194,7 +259,7 @@
     flex-wrap: wrap;
 
     li {
-      width: 7%;
+      width: 9%;
       font-size: 18px;
       list-style: none;
       text-align: center;

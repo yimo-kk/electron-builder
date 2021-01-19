@@ -1,16 +1,16 @@
 
 import zhCN from 'ant-design-vue/lib/locale-provider/zh_CN'
 const path = require('path')
-export default function() {
+export default function () {
   return {
-    data() {
+    data () {
       return {
         locale: zhCN,
         isPlaying: false
       };
     },
     methods: {
-      play() {
+      play () {
         this.lastRunTime = Date.now();
         let audio = document.querySelector("#audio");
         if (!this.isPlaying) {
@@ -25,22 +25,22 @@ export default function() {
               audio.pause();
               this.isPlaying = false;
             }
-          } 
+          }
           clearTimeout(timeOut);
         }, 1000);
       },
-      notification(data) {
+      notification (data) {
         const myNotification = new Notification(this.$t('NewNews'), {
-            body: ``,
-            timeoutType: "default",
-            silent: true,
-            icon: path.join(__dirname, '../../assets/logo.png')
+          body: ``,
+          timeoutType: "default",
+          silent: true,
+          icon: path.join(__dirname, '../../assets/logo.png')
         });
         myNotification.onclick = () => {
-            this.$electron.ipcRenderer.send("message_notification_click", );
+          this.$electron.ipcRenderer.send("message_notification_click",);
         };
       },
-      setLocale(){
+      setLocale () {
         this.locale = zhCN
       }
     },

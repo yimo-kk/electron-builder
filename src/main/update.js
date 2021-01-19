@@ -66,7 +66,6 @@ export function updateHandle (window, feedUrl) {
   //接收渲染进程消息，开始检查更新
   ipcMain.on("checkForUpdate", (e, arg) => {
     //执行自动更新检查
-    // sendUpdateMessage({cmd:'checkForUpdate',message:arg})
     autoUpdater.checkForUpdates();
   })
 }

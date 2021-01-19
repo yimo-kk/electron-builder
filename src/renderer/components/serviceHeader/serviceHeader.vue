@@ -162,6 +162,7 @@ export default {
       }
     })
   },
+  destroyed() {},
 }
 </script>
 

@@ -5,7 +5,7 @@ import {
   Menu,
   globalShortcut,
   ipcMain,
-  Notification,
+  // Notification,
 } from "electron";
 import path from "path";
 import { updateHandle } from './update'
@@ -23,7 +23,7 @@ if (process.env.NODE_ENV !== "development") {
 
 let mainWindow;
 let appTray;
-var notification;
+// var notification;
 const winURL =
   process.env.NODE_ENV === "development"
     ? `http://localhost:9080`
@@ -98,7 +98,7 @@ function createWindow () {
     folderPath = downloadFolder;
     mainWindow.webContents.downloadURL(url);
   })
-  // 尝试更新
+  // 尝试更新 
   updateHandle(mainWindow, feedUrl)
   // 下载文件
   mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
