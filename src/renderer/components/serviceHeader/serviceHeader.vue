@@ -45,9 +45,9 @@
             <a-menu-item>
               <p @click="setStatus(2)">{{ $t('goAway') }}</p>
             </a-menu-item>
-            <!-- <a-menu-item>
-              <p @click="setStatus(0)">{{$t('offline')}}</p>
-            </a-menu-item> -->
+            <a-menu-item>
+              <p @click="setting">{{ $t('setting') }}</p>
+            </a-menu-item>
             <a-menu-item>
               <p @click="refresh">{{ $t('refresh') }}</p>
             </a-menu-item>
@@ -63,23 +63,134 @@
         localeval == 'zh' ? 'English' : '中文'
       }}</span>
     </div>
+    <a-modal
+      :title="$t('setting')"
+      width="60%"
+      :visible="isSetting"
+      @ok="handleOk"
+      @cancel="isSetting = false"
+    >
+      <div class="setting-style">
+        <a-form>
+          <a-form-item label="转接提示设置：">
+            <a-checkbox v-model="settingData.transfer_task">
+              任务栏闪烁
+            </a-checkbox>
+            <a-checkbox v-model="settingData.transfer_tray">
+              托盘闪烁
+            </a-checkbox>
+            <a-checkbox v-model="settingData.transfer_sound">
+              声音提示
+            </a-checkbox>
+          </a-form-item>
+          <a-form-item label="待接入提示设置：">
+            <a-checkbox v-model="settingData.menu_prompt">
+              菜单栏等待接入数
+            </a-checkbox>
+          </a-form-item>
+          <a-form-item label="群提示设置：">
+            <a-checkbox v-model="settingData.group_task">
+              任务栏闪烁
+            </a-checkbox>
+            <a-checkbox v-model="settingData.group_tray">
+              托盘闪烁
+            </a-checkbox>
+            <a-checkbox v-model="settingData.group_sound">
+              声音提示
+            </a-checkbox>
+            <a-checkbox v-model="settingData.group_receive">
+              收到用户消息数量
+            </a-checkbox>
+            <a-checkbox v-model="settingData.group_menu">
+              菜单栏总消息数
+            </a-checkbox>
+          </a-form-item>
+          <a-form-item label="用户提示设置：">
+            <a-checkbox v-model="settingData.user_task">
+              任务栏闪烁
+            </a-checkbox>
+            <a-checkbox v-model="settingData.user_tray">
+              托盘闪烁
+            </a-checkbox>
+            <a-checkbox v-model="settingData.user_sound">
+              声音提示
+            </a-checkbox>
+            <a-checkbox v-model="settingData.user_join">
+              用户进入提示
+            </a-checkbox>
+            <a-checkbox v-model="settingData.user_receive">
+              收到用户消息数量
+            </a-checkbox>
+            <a-checkbox v-model="settingData.menu_total">
+              菜单栏总消息数
+            </a-checkbox>
+          </a-form-item>
+          <a-form-item label="留言提示设置：">
+            <a-checkbox v-model="settingData.stay_num">
+              菜单栏总留言数
+            </a-checkbox>
+          </a-form-item>
+        </a-form>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script>
-const { remote } = require('electron')
 import common from '@/mixins/common'
 import moment from 'moment'
 import 'moment/locale/zh-cn'
 moment.locale('zh-cn')
-import { mapMutations } from 'vuex'
+import { mapMutations, mapActions } from 'vuex'
+
+// const multitapPrompt = [
+//   { label: '任务栏闪烁', value: 1 },
+//   { label: '托盘闪烁', value: 2 },
+//   { label: '声音提示', value: 3 },
+// ]
+// const userPrompt = [
+//   { label: '任务栏闪烁', value: 1 },
+//   { label: '托盘闪烁', value: 2 },
+//   { label: '声音提示', value: 3 },
+//   { label: '用户进入提示', value: 4 },
+//   { label: '收到用户消息数量', value: 5 },
+//   { label: '菜单栏总消息数', value: 6 },
+// ]
+// const groupPrompt = [
+//   { label: '任务栏闪烁', value: 1 },
+//   { label: '托盘闪烁', value: 2 },
+//   { label: '声音提示', value: 3 },
+//   { label: '收到群消息数量', value: 4 },
+//   { label: '菜单栏总消息数', value: 5 },
+// ]
+// const awaitPrompt = [{ label: '菜单栏等待接入数', value: 1 }]
+// const messagePrompt = [{ label: '菜单栏总留言数', value: 1 }]
 export default {
   name: 'ServiceHeader',
   inject: ['reload'],
   mixins: [common()],
   data() {
     return {
+      settingData: {
+        group_menu: true,
+        group_receive: true,
+        group_sound: true,
+        group_task: true,
+        group_tray: true,
+        menu_prompt: true,
+        stay_num: true,
+        transfer_sound: true,
+        transfer_task: true,
+        transfer_tray: true,
+        user_join: true,
+        user_receive: true,
+        user_sound: true,
+        user_task: true,
+        user_tray: true,
+        menu_total: true,
+      },
       localeval: localStorage.getItem('lang') || 'zh',
+      isSetting: false,
     }
   },
   computed: {
@@ -92,9 +203,23 @@ export default {
       ]
     },
   },
+  watch: {
+    '$store.state.Setting.prompt'(val) {
+      this.settingValue = val
+    },
+  },
   methods: {
     moment,
-    ...mapMutations(['RESETVUEX']),
+    ...mapActions(['getKefuSystemData', 'updateKefuSystemData']),
+    ...mapMutations([
+      'RESETVUEX',
+      'SET_MULTITAPPROMPT',
+      'SET_USERPROMPT',
+      'SET_GROUPPROMPT',
+      'SET_AWAITPROMPT',
+      'SET_MESSAGEPROMPT',
+      'SET_SETTING',
+    ]),
     confirm() {
       let that = this
       this.$confirm({
@@ -108,6 +233,7 @@ export default {
             name: 'Login',
           })
           that.RESETVUEX()
+          localStorage.clear()
         },
         onCancel() {},
       })
@@ -151,8 +277,27 @@ export default {
         moment.locale('zh')
         this.$i18n.locale = 'zh'
         localStorage.setItem('lang', 'zh')
-        this.setLocale()
+        // this.setLocale()
       }
+    },
+    setting() {
+      this.getKefuSystemData({ kefu_id: this.userInfo.kefu_id }).then((res) => {
+        this.settingData = JSON.parse(JSON.stringify(res))
+      })
+      this.isSetting = true
+    },
+    handleOk() {
+      this.updateKefuSystemData({
+        kefu_id: this.userInfo.kefu_id,
+        data: this.settingData,
+      })
+        .then(() => {
+          this.$message.success(this.$t('updateSuccess'))
+        })
+        .catch((err) => {
+          this.$message.error(this.$t('updateError'))
+        })
+      this.isSetting = false
     },
   },
   mounted() {
@@ -167,6 +312,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import '@/style/common.less';
 .serviceHeader {
   color: #fff;
   margin-right: -30px;
@@ -191,5 +337,16 @@ export default {
       cursor: pointer;
     }
   }
+}
+.setting-style {
+  height: 54vh;
+  overflow: auto;
+  .scrollbar();
+}
+/deep/ .ant-form-item {
+  margin-bottom: 0px;
+}
+/deep/ .ant-modal-body {
+  padding: 0 0 0 24px;
 }
 </style>

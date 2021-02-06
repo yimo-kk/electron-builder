@@ -42,8 +42,8 @@
 </template>
 
 <script>
-import { DebounceBy } from '@/utils/libs'
 import common from './mixins/common'
+const electron = require('electron')
 export default {
   name: 'my-project',
   mixins: [common()],
@@ -71,12 +71,11 @@ export default {
     document.ondragover = function(event) {
       return false
     }
-
     // 更新
-    this.$electron.ipcRenderer.send('checkForUpdate')
+    electron.ipcRenderer.send('checkForUpdate')
     let _this = this
     //接收主进程版本更新消息
-    this.$electron.ipcRenderer.on('message', (event, arg) => {
+    electron.ipcRenderer.on('message', (event, arg) => {
       if ('update-available' == arg.cmd) {
         // 显示升级对话框
         _this.visible = true
@@ -89,11 +88,11 @@ export default {
       }
     })
     // 点击叉叉隐藏到托盘
-    this.$electron.ipcRenderer.on('before_hide', () => {
-      this.$electron.ipcRenderer.send('app-hide')
+    electron.ipcRenderer.on('before_hide', (event) => {
+      electron.ipcRenderer.send('app-hide')
     })
     // 退出程序事件
-    this.$electron.ipcRenderer.on('before_closed', () => {
+    electron.ipcRenderer.on('before_closed', () => {
       let that = this
       let { kefu_code, seller_code } = that.$route.query
       if (kefu_code && seller_code) {
@@ -117,7 +116,7 @@ export default {
       that.$router.push({ name: 'Login' })
       that.$store.commit('SET_USER_INFO', '')
       that.$store.commit('RESETVUEX')
-      this.$electron.ipcRenderer.send('app-closed')
+      electron.ipcRenderer.send('app-closed')
     })
   },
   methods: {

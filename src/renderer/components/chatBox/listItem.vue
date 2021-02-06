@@ -7,7 +7,7 @@
   >
     <a-badge
       :data-index="index"
-      :count="groupData.badgeShow || groupData.noReadNum"
+      :count="isNum ? groupData.badgeShow || groupData.noReadNum : ''"
       :overflow-count="99"
     >
       <img
@@ -80,6 +80,10 @@ export default {
     index: Number,
     isHeadImg: {
       type: Boolean,
+    },
+    isNum: {
+      type: Boolean,
+      default: true,
     },
   },
   components: {},

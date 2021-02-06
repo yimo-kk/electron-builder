@@ -1,12 +1,9 @@
 <template>
   <div class="record_content pointer flex_up_down_center" @click="audio">
-    <!-- <a-spin>
-        <a-icon slot="indicator" type="loading" style="font-size: 14px" spin />
-    </a-spin> -->
     <p
       class="time"
       style="marginleft:10px"
-      v-if="playdata.from_name === userInfo.kefu_name"
+      v-if="playdata.from_name === userInfo.kefu_name && time"
     >
       {{ playdata.file_duration || playdata.message.duration }}"
     </p>
@@ -22,10 +19,9 @@
       <div :class="['middle', play ? '' : 'stopanimate']"></div>
       <div :class="['large', play ? '' : 'stopanimate']"></div>
     </div>
-    <p class="time" v-if="playdata.from_name !== userInfo.kefu_name">
+    <p class="time" v-if="playdata.from_name !== userInfo.kefu_name && time">
       {{ playdata.file_duration || playdata.message.duration }}"
     </p>
-    <!-- <a-spin /> -->
   </div>
 </template>
 
@@ -43,6 +39,7 @@ export default {
       type: Boolean,
       default: false,
     },
+    time: Boolean,
   },
   data() {
     return {

@@ -5,7 +5,7 @@ import routers from "./router";
 // socket
 import SocketIO from "socket.io-client";
 import VueSocketIO from "vue-socket.io";
-import { BaseUrl } from '@/config.js'
+// import { BaseUrl } from '@/config.js'
 Vue.use(Router);
 const originalPush = Router.prototype.push;
 Router.prototype.push = function push (location, onResolve, onReject) {
@@ -44,28 +44,31 @@ router.beforeEach((to, from, next) => {
     store.commit("SET_USER_INFO", "");
     next(); // 跳转
   }
-  let path
-  if (seller_code && kefu_code) {
-    path = `/socket.io/?username=${kefu_code}&code=${seller_code}&`
-  } else {
-    path = `/socket.io/?username=loginauth&`
-  }
-  Vue.use(
-    new VueSocketIO({
-      debug: true,
-      connection: SocketIO.connect(`wss://${BaseUrl.VUE_APP_BASE_URL_CONTENT}`, {
-        // connection: SocketIO.connect(`wss://server.nikidigital.net`, {
-        path: path,
-        transports: ["websocket"],
-      }),
-      vuex: {
-        store,
-        mutationPrefix: "SOCKET_",
-        actionPrefix: "SOCKET_",
-      },
-    })
-  );
+  if (to.name !== "Login") {
+    let path
+    if (seller_code && kefu_code) {
+      path = `/socket.io/?username=${kefu_code}&code=${seller_code}&`
+    } else {
+      path = `/socket.io/?username=loginauth&`
+    }
+    let url = localStorage.getItem('shopUrl') || store.state.Setting.shopUrl
+    url && Vue.use(
+      new VueSocketIO({
+        debug: true,
+        connection: SocketIO.connect(`wss://${url}`, {
+          // connection: SocketIO.connect(`wss://server.nikidigital.net`, {
+          path: path,
+          transports: ["websocket"],
+        }),
+        vuex: {
+          store,
+          mutationPrefix: "SOCKET_",
+          actionPrefix: "SOCKET_",
+        },
+      })
+    );
 
+  }
   next();
 });
 

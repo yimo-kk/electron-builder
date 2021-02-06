@@ -11,7 +11,11 @@
               item.group_id == activityGroup.activityId ? 'activt_item' : '',
             ]"
           >
-            <ListItem :groupData="item" @selectGroup="selectGroup"></ListItem>
+            <ListItem
+              :isNum="$store.state.Setting.setting.group_receive?true:false"
+              :groupData="item"
+              @selectGroup="selectGroup"
+            ></ListItem>
           </div>
         </div>
       </a-col>

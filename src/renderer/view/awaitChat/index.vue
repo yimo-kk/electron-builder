@@ -24,7 +24,7 @@
         size="small"
         :loading="loading"
         @change="handleTableChange"
-        :scroll="{ y: 320 }"
+        :scroll="{ y: '60vh' }"
       >
         <template v-for="(item, index) in columns" :slot="item.slotName">
           <span :key="index">{{ $t(item.slotName) }}</span>
@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import { getCustomerQueue, reception } from '@/api/await.js'
+import { reception } from '@/api/await.js'
 import { mapMutations, mapActions } from 'vuex'
 export default {
   name: 'AwaitChat',
@@ -178,7 +178,17 @@ export default {
                 level: data.level,
                 is_relink: data.is_relink,
               })
-
+              // 主动接入也需添加进入显示
+              that.$socket.emit('message', {
+                from_name: data.customer_name,
+                from_id: data.customer_id,
+                to_id: that.userInfo.kefu_id,
+                to_name: that.userInfo.kefu_name,
+                seller_code: that.userInfo.seller_code,
+                kefu_code: that.userInfo.kefu_code,
+                message: `接待了用户 "${data.customer_name}" `,
+                cmd: 'addPrompt',
+              })
               that.$emit('selectMenu', { key: 'CurrentChat' })
             } else {
               that.$message.error(result.msg)

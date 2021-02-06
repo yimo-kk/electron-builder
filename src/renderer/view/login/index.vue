@@ -10,8 +10,16 @@
         :wrapper-col="{ span: 17 }"
         @submit="handleSubmit"
       >
+        <a-form-item :label="$t('login.shopUrl')" style="position: relative;">
+          <a-input
+            v-model="loginData.shopUrl"
+            placeholder="例如：server.nikidigital.net"
+            allowClear
+          >
+            <a-icon slot="prefix" type="fork" />
+          </a-input>
+        </a-form-item>
         <a-form-item :label="$t('login.shopCode')" style="position: relative;">
-          <!--    @blur="shopCodeBlur" -->
           <a-input
             @focus="shopCodeFocus"
             @blur="shopCodeBlur"
@@ -87,17 +95,25 @@
           <a-button type="primary" html-type="submit" style="width:100%">
             {{ $t('login.logIn') }}</a-button
           >
-          <a-checkbox
-            v-decorator="[
-              'remember',
-              {
-                valuePropName: 'checked',
-                initialValue: true,
-              },
-            ]"
-          >
-            <p class="remember_password">{{ $t('login.remember') }}</p>
-          </a-checkbox>
+          <div class="other_language">
+            <a-checkbox
+              v-decorator="[
+                'remember',
+                {
+                  valuePropName: 'checked',
+                  initialValue: true,
+                },
+              ]"
+            >
+              <p class="remember_password">{{ $t('login.remember') }}</p>
+            </a-checkbox>
+            <p
+              class="language"
+              @click="changeLocale(localeval === 'zh' ? 'en' : 'zh')"
+            >
+              {{ localeval == 'zh' ? 'English' : '中文' }}
+            </p>
+          </div>
         </a-form-item>
       </a-form>
     </a-card>
@@ -107,21 +123,24 @@
 <script>
 import Store from 'electron-store'
 const store = new Store()
-import { BaseUrl } from '../../config.js'
-const session = require('electron').remote.session
-const { remote } = require('electron')
 import { mapActions, mapMutations } from 'vuex'
 import { isLocalStorage } from '@/utils/libs'
+import moment from 'moment'
+import 'moment/locale/zh-cn'
+moment.locale('zh-cn')
 export default {
+  // 登录
   name: 'Login',
   data() {
     return {
+      localeval: localStorage.getItem('lang') || 'zh',
       ip: '',
       loading: false,
       loginParam: this.$form.createForm(this, {
         name: 'login',
       }),
       loginData: {
+        shopUrl: '',
         shopCode: '',
         account: '',
         password: '',
@@ -164,7 +183,7 @@ export default {
   },
   methods: {
     ...mapActions(['handleLogin', 'getUserInfo']),
-    ...mapMutations(['SET_USER_INFO']),
+    ...mapMutations(['SET_USER_INFO', 'SET_LOGINSTATE', 'SET_SHOPURL']),
     handleSubmit(e) {
       e.preventDefault()
       this.loginParam.validateFields((err, values) => {
@@ -182,11 +201,14 @@ export default {
             return
           }
           let params = {
+            shopUrl: this.loginData.shopUrl,
             username: this.loginData.account,
             password: this.loginData.password,
             seller_code: this.loginData.shopCode,
           }
           this.loading = true
+          localStorage.setItem('shopUrl', this.loginData.shopUrl)
+          this.SET_SHOPURL(this.loginData.shopUrl)
           this.handleLogin(params)
             .then((result) => {
               if (result.code === 0) {
@@ -195,6 +217,7 @@ export default {
                     logoNum: params.seller_code,
                     account: params.username,
                     password: params.password,
+                    shopUrl: params.shopUrl,
                   })
                 } else {
                   this.loginSave(params.seller_code, params.username, '')
@@ -202,11 +225,11 @@ export default {
                 this.$message.success(result.msg)
                 this.getUserData(params, result)
               } else if (result.code === -7) {
-                this.$socket.emit('message', {
-                  cmd: 'forced',
-                  seller_code: params.seller_code,
-                  kefu_name: params.username,
-                })
+                // this.$socket.emit('message', {
+                //   cmd: 'forced',
+                //   seller_code: params.seller_code,
+                //   kefu_name: params.username,
+                // })
                 this.getUserData(params, result)
               } else {
                 this.loading = false
@@ -214,6 +237,7 @@ export default {
                   content: result.msg,
                 })
               }
+              this.SET_LOGINSTATE(result.code)
             })
             .catch((error) => {
               this.loading = false
@@ -233,30 +257,21 @@ export default {
     //获取
     getCookies() {
       if (Object.keys(this.loginUserInfo).length) {
-        let { logoNum, account, password } = this.loginUserInfo.currentLogin
+        let {
+          shopUrl,
+          logoNum,
+          account,
+          password,
+        } = this.loginUserInfo.currentLogin
         this.loginData = {
           account: account,
           password: password,
           shopCode: logoNum,
+          shopUrl,
         }
       }
     },
-    // 不记住密码
-    clearCookies() {
-      // store.delete('password')
-      // localStorage.removeItem('username')
-      // localStorage.removeItem('password')
-      // localStorage.removeItem('seller_code')
-      // session.defaultSession.clearStorageData(
-      //   {
-      //     origin: this.url,
-      //     storages: ['cookies'],
-      //   },
-      //   function(error) {
-      //     if (error) console.error(error)
-      //   }
-      // )
-    },
+
     getUserData(params, result) {
       this.getUserInfo({
         accessToken: result.data.accessToken,
@@ -281,18 +296,20 @@ export default {
             query: {
               seller_code: params.seller_code,
               kefu_code: res.data.kefu_code,
+              kefu_name: this.loginData.account,
             },
           })
       })
     },
     // 存储账号等
-    loginSave({ logoNum, account, password }) {
+    loginSave({ shopUrl, logoNum, account, password }) {
       //当前登录账号信息
       let loginUserInfo = {
         currentLogin: {
           logoNum,
           account,
           password,
+          shopUrl,
         },
       }
       // 获取数据查找当前商家是否存在
@@ -463,6 +480,22 @@ export default {
         this.showShopCode = false
       })
     },
+    changeLocale(localeval) {
+      this.localeval = localeval
+      if (localeval === 'en') {
+        moment.locale('en')
+        this.$i18n.locale = 'en'
+        localStorage.setItem('lang', 'en')
+        this.$nextTick(() => {
+          this.locale = null
+        })
+      } else {
+        moment.locale('zh')
+        this.$i18n.locale = 'zh'
+        localStorage.setItem('lang', 'zh')
+        // this.setLocale()
+      }
+    },
   },
   mounted() {
     // store.delete('loginUserInfo') // 清空存储数据
@@ -470,6 +503,7 @@ export default {
     this.loginUserInfo = store.get('loginUserInfo') || {}
     this.getCookies()
     this.notClick()
+    // this.$socket
   },
 }
 </script>
@@ -525,6 +559,20 @@ export default {
     }
   }
 }
+.other_language {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .language {
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    line-height: 20px;
+    font-size: 12px;
+    height: 20px;
+    padding: 0px 3px;
+    cursor: pointer;
+  }
+}
 /deep/.ant-input {
   font-size: 12px;
   border: 1px solid #d9d9d9;
@@ -538,6 +586,6 @@ export default {
 /deep/ .ant-checkbox-wrapper {
   display: flex;
   align-items: center;
-  width: 6rem;
+  // width: 6rem;
 }
 </style>

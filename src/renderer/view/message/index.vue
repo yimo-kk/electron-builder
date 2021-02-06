@@ -149,6 +149,7 @@ const columns = [
   },
 ]
 export default {
+  // 留言列表
   name: 'Message',
   components: {},
   data() {

@@ -19,6 +19,7 @@
                 ></customIcon>
                 <p>{{ $t('topTitle.currentChat') }}</p>
                 <a-badge
+                  v-show="$store.state.Setting.setting.menu_total"
                   :count="$store.getters.currentNum"
                   :overflow-count="99"
                   :offset="[0, -18]"
@@ -26,11 +27,23 @@
                 </a-badge>
               </div>
             </a-menu-item>
+            <a-menu-item key="SessionRecord">
+              <div class="flex_center">
+                <a-icon type="audit" class="icon_style" />
+                <p>{{ $t('topTitle.chatLog') }}</p>
+                <a-badge :count="0" :overflow-count="99" :offset="[0, -10]">
+                </a-badge>
+              </div>
+            </a-menu-item>
             <a-menu-item key="AwaitChat">
               <div class="flex_center">
                 <customIcon type="icon-dengdai" class="icon_style"></customIcon>
-                <p>{{ $t('topTitle.awaitChat') }}</p>
+                <p>
+                  {{ $t('topTitle.awaitChat') }}
+                </p>
+
                 <a-badge
+                  v-show="$store.state.Setting.setting.menu_prompt"
                   :count="awaitList.length"
                   :overflow-count="99"
                   :offset="[0, -18]"
@@ -46,6 +59,7 @@
                 ></customIcon>
                 <p>{{ $t('topTitle.groupChat') }}</p>
                 <a-badge
+                  v-show="$store.state.Setting.setting.group_menu"
                   :count="$store.getters.groupChatNum"
                   :overflow-count="99"
                   :offset="[0, -10]"
@@ -53,11 +67,13 @@
                 </a-badge>
               </div>
             </a-menu-item>
+
             <a-menu-item key="Message">
               <div class="flex_center">
                 <a-icon type="audit" class="icon_style" />
                 <p>{{ $t('topTitle.leaveMessage') }}</p>
                 <a-badge
+                  v-show="$store.state.Setting.setting.stay_num"
                   :count="$store.state.message.untreatedNum"
                   :overflow-count="99"
                   :offset="[0, -10]"
@@ -82,6 +98,9 @@
         <div v-if="selectedKey === 'GroupChat'" style="height:100%">
           <GroupChat ref="GroupChat"></GroupChat>
         </div>
+        <div v-if="selectedKey === 'SessionRecord'" style="height:100%">
+          <SessionRecord></SessionRecord>
+        </div>
         <div v-if="selectedKey === 'Message'" style="height:100%">
           <Message></Message>
         </div>
@@ -96,6 +115,7 @@ import AwaitChat from '@/view/awaitChat/index'
 import CurrentChat from '@/view/currentChat/index'
 import GroupChat from '@/view/groupChat/index'
 import Message from '@/view/message/index'
+import SessionRecord from '@/view/sessionRecord/index'
 import { updateKefuStatus } from '@/api/login'
 import common from '@/mixins/common'
 import { handleRelink } from '@/api/current.js'
@@ -111,6 +131,7 @@ export default {
     CurrentChat,
     GroupChat,
     Message,
+    SessionRecord,
   },
   data() {
     return {
@@ -145,7 +166,16 @@ export default {
   sockets: {
     // connect:查看socket是否渲染成功
     connect() {
+      if (this.$store.state.Setting.loginState === -7) {
+        this.$socket.emit('message', {
+          cmd: 'forced',
+          seller_code: this.$route.query.seller_code,
+          kefu_name: this.$route.query.kefu_name,
+        })
+        this.SET_LOGINSTATE(null)
+      }
       this.reconnect()
+      this.updateKefuStatus()
     },
     // disconnect:检测socket断开连接
     disconnect(data) {},
@@ -192,8 +222,23 @@ export default {
     },
     '$store.state.Socket.oldUser': {
       handler(newVal) {
-        this.play()
-        this.$electron.ipcRenderer.send('message_prompt')
+        // this.$store.state.Setting.userPromptValue.includes(3) && this.play()
+        // this.$store.state.Setting.userPromptValue.includes(4) &&
+        //   this.$electron.ipcRenderer.send('message_prompt')
+        this.$store.state.Setting.setting.user_join && this.play()
+        this.$store.state.Setting.setting.user_receive &&
+          this.$electron.ipcRenderer.send('message_prompt')
+        // 进入添加进入显示
+        this.$socket.emit('message', {
+          from_name: newVal.username,
+          from_id: newVal.uid,
+          to_id: this.userInfo.kefu_id,
+          to_name: this.userInfo.kefu_name,
+          seller_code: this.userInfo.seller_code,
+          kefu_code: this.userInfo.kefu_code,
+          message: `"${newVal.username}" 前来咨询`,
+          cmd: 'addPrompt',
+        })
       },
       deep: true,
     },
@@ -229,9 +274,18 @@ export default {
       handler(newVal) {
         let val = JSON.parse(JSON.stringify(newVal))
         if (val.kefu_code == this.userInfo.kefu_code) {
-          this.play()
-          this.$electron.ipcRenderer.send('message_prompt')
-          // 暂时隐藏系统通知
+          // this.$store.state.Setting.multitapPromptValue.includes(3) &&
+          //   this.play()
+          // this.$store.state.Setting.multitapPromptValue.includes(1) &&
+          //   this.$electron.ipcRenderer.send('message_prompt')
+          // this.$store.state.Setting.multitapPromptValue.includes(2) &&
+          //   this.$electron.ipcRenderer.send('message_tray')
+          this.$store.state.Setting.setting.transfer_sound && this.play()
+          this.$store.state.Setting.setting.transfer_task &&
+            this.$electron.ipcRenderer.send('message_prompt')
+          this.$store.state.Setting.setting.transfer_tray &&
+            this.$electron.ipcRenderer.send('message_tray')
+          // 暂时隐藏系统通知 transfer_task
           // this.$electron.ipcRenderer.send('isVisible_box', {
           //   msg: val.message,
           //   tab: 'CurrentChat',
@@ -266,6 +320,18 @@ export default {
                 from_kefu_code: val.from_kefu_code,
                 level: val.level,
               })
+              console.log(newVal)
+              // 转接后 添加进入显示
+              this.$socket.emit('message', {
+                from_name: val.user_name,
+                from_id: val.user_id,
+                to_id: this.userInfo.kefu_id,
+                to_name: this.userInfo.kefu_name,
+                seller_code: this.userInfo.seller_code,
+                kefu_code: this.userInfo.kefu_code,
+                message: val.message,
+                cmd: 'addPrompt',
+              })
               that.selectedKey = 'CurrentChat'
             }, 800),
             onCancel() {
@@ -289,9 +355,16 @@ export default {
         let data = JSON.parse(JSON.stringify(newVal))
         // 消息声音提示和任务栏闪烁
         if (data.from_name !== this.userInfo.kefu_name) {
-          this.play()
-          this.$electron.ipcRenderer.send('message_prompt')
-          this.$electron.ipcRenderer.send('message_tray')
+          // this.$store.state.Setting.userPromptValue.includes(3) && this.play()
+          // this.$store.state.Setting.userPromptValue.includes(1) &&
+          //   this.$electron.ipcRenderer.send('message_prompt')
+          // this.$store.state.Setting.userPromptValue.includes(2) &&
+          //   this.$electron.ipcRenderer.send('message_tray')
+          this.$store.state.Setting.setting.user_sound && this.play()
+          this.$store.state.Setting.setting.user_task &&
+            this.$electron.ipcRenderer.send('message_prompt')
+          this.$store.state.Setting.setting.user_tray &&
+            this.$electron.ipcRenderer.send('message_tray')
           // 暂时隐藏系统通知
           // this.$electron.ipcRenderer.send('isVisible_box', {
           //   msg: `${data.from_name}${this.$t('sendNewMessage')}`,
@@ -317,9 +390,12 @@ export default {
       handler(newVal) {
         let data = JSON.parse(JSON.stringify(newVal))
         if (data.from_name !== this.userInfo.kefu_name) {
-          this.play()
-          this.$electron.ipcRenderer.send('message_prompt')
-          this.$electron.ipcRenderer.send('message_tray')
+          this.$store.state.Setting.setting.group_sound && this.play()
+          this.$store.state.Setting.setting.group_task &&
+            this.$electron.ipcRenderer.send('message_prompt')
+          this.$store.state.Setting.setting.group_tray &&
+            this.$electron.ipcRenderer.send('message_tray')
+
           // 暂时隐藏系统通知
           // this.$electron.ipcRenderer.send('isVisible_box', {
           //   msg: this.$t('rogerThat'),
@@ -344,7 +420,12 @@ export default {
     },
   },
   methods: {
-    ...mapActions(['getGroupList', 'getAwaitList', 'getMessageList']),
+    ...mapActions([
+      'getGroupList',
+      'getAwaitList',
+      'getMessageList',
+      'getKefuSystemData',
+    ]),
     ...mapMutations([
       'SET_CHAT_LIST',
       'SET_CURRENT_USER',
@@ -353,6 +434,7 @@ export default {
       'SET_STATUS',
       'SET_ACTIVITY_GROUP',
       'SET_CHAT_TIME',
+      'SET_LOGINSTATE',
     ]),
     selectMenu(val) {
       this.selectedKey = val.key
@@ -414,6 +496,7 @@ export default {
             kefu_code: this.userInfo.kefu_code,
             seller_code: this.userInfo.seller_code,
           })
+          //会导致离开状态被修改
           this.setStatus(this.kefuStatus)
         } else {
           clearInterval(timeOut)
@@ -426,7 +509,6 @@ export default {
     this.getMessageList({
       seller_code: this.userInfo.seller_code,
     })
-    this.updateKefuStatus()
     this.getGroupList({ kefu_id: this.userInfo.kefu_id })
     // 等待接入
     this.getAwaitList({
@@ -437,6 +519,8 @@ export default {
       this.selectedKey = val
     })
     this.$route.query.seller_code && this.polling()
+    // 获取设置配置
+    this.getKefuSystemData({ kefu_id: this.userInfo.kefu_id })
   },
 }
 </script>

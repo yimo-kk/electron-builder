@@ -1,4 +1,4 @@
-// import electron from 'electron'
+
 import { getGroupList } from "@/api/group.js";
 import { isArr, deleteListValue, compare, compareTime, getQueryString } from "@/utils/libs.js";
 import Toast from '@/components/Toast/toast'
@@ -24,9 +24,6 @@ const state = {
     isAdmin: false,
     img: ''
   },
-  // userInfoV: router,//JSON.parse(localStorage.getItem(router.query.seller_code))[
-  //   router.query.kefu_code
-  // ],
   chatTime: 0, // 聊天信息是否每条显示时间
   userMessage: {}, // 客服收到用户消息
   relinkMessage: {}, // 客服收到转接消息
@@ -40,7 +37,9 @@ const state = {
   groupForbid: {}, //禁言全局
   userForbid: {}, //禁言个人
   kickGroup: {},
-  kefuStatus: {},
+  kefuStatus: {
+    online_status: 1
+  },
   oldUser: {},//上次接待的人
   serviceMsg: {}, //客服自己发送的消息
   userJoin: {}, // 有人加入群聊
@@ -199,9 +198,12 @@ const mutations = {
   //新待接待
   SOCKET_addQueue: (state, data) => {
     let oldList = JSON.parse(JSON.stringify(state.awaitList))
-    oldList.push(data)
-    oldList.sort(compare('level'));
-    state.awaitList = oldList
+    if (!state.awaitList.includes(data)) {
+      oldList.push(data)
+      oldList.sort(compare('level'));
+      state.awaitList = oldList
+    }
+
   },
   // 收到拉黑全局提示
   SOCKET_groupBlack: (state, data) => {
@@ -266,6 +268,7 @@ const mutations = {
   },
   // 当前登录状态
   SOCKET_setStatus: (state, data) => {
+
     state.kefuStatus = data
   },
   //  上次接待 再次默认接待
@@ -276,7 +279,6 @@ const mutations = {
       state.currentUser = {
         activtyUid: data.uid,
         activtyeUsername: data.username,
-
         login_ip: data.login_ip,
         area: data.area,
         level: data.level,
@@ -346,6 +348,7 @@ const mutations = {
     state.kefuStatus = {}
     state.oldUser = {}//上次接待的人
     state.closeUsers = {}
+    localStorage.removeItem('shopUrl')
   },
 }
 const actions = {

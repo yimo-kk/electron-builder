@@ -50,6 +50,7 @@ export default {
   offline: '离线',
   goAway: '离开',
   refresh: '刷新',
+  setting: '设置',
   outLogin: '退出',
   determine: '确定',
   cancel: '取消',
@@ -69,6 +70,8 @@ export default {
   confirmCancel: "您确定关闭与",
   conversation: '的会话吗？',
   download: '点击下载文件',
+  updateSuccess: '修改成功',
+  updateError: '修改失败',
   transferState: {
     noSservice: '当前客服处于离开状态，',
     confirm: "您确定将",
@@ -80,7 +83,8 @@ export default {
     awaitChat: '待接入会话',
     groupChat: '群聊管理',
     groupChat: '群聊管理',
-    leaveMessage: '留言列表'
+    leaveMessage: '留言列表',
+    chatLog: '会话记录'
   },
   currentInfo: {
     userInfo: '用户信息',
@@ -105,6 +109,10 @@ export default {
     transfer: '等待转接'
   },
   awaitInfo: {
+    userName: '访客名称',
+    searchTime: '时间',
+    startTime: '开始时间',
+    endTime: '结束时间',
     title: '待接待用户列表',
     search: '请输入用户名',
     tableTitle: {
@@ -117,6 +125,16 @@ export default {
       Tourist: '游客',
       user: '用户',
       reception: '接待'
+    },
+    sessionRecord: {
+      visitorAvatar: '访客头像',
+      visitorName: '访客名称',
+      visitorIp: '访客ip',
+      visitorArea: '地区',
+      startReceptionTime: '开始接待时间',
+      endReceptionTime: '结束接待时间',
+      receptionTime: '接待时长',
+      viewLog: '查看聊天记录'
     }
   },
   groupInfo: {
@@ -137,6 +155,7 @@ export default {
     reason: '请输入拉黑原因'
   },
   login: {
+    shopUrl: '商家域名',
     shopCode: '商家标识',
     pleaseShopCode: '请输入商家标识',
     account: '账号',

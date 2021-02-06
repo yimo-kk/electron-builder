@@ -21,6 +21,9 @@
           >
             <div>
               <ListItem
+                :isNum="
+                  $store.state.Setting.setting.user_receive ? true : false
+                "
                 :data-index="index"
                 :index="index"
                 :groupData="item"
@@ -30,7 +33,7 @@
               ></ListItem>
             </div>
           </div>
-        </a-col>
+        </a-col> 
         <a-col :span="centerNum" class="full_height">
           <div class="chat_content">
             <a-page-header
@@ -193,7 +196,6 @@
 </template>
 
 <script>
-import dayjs from 'dayjs'
 import ListItem from '@/components/chatBox/listItem'
 import ChatBox from '@/components/chatBox/chatBox'
 import CurrentOperation from './component/currentOperation'
@@ -312,8 +314,10 @@ export default {
         let my_send = JSON.parse(JSON.stringify(newVal))
         if (newVal.from_name == this.userInfo.kefu_name) {
           newVal.type === 3 && (my_send.message.play = false)
-          newVal.type === 0 &&
-            (my_send.message = this.conversionFace(newVal.message))
+          if (newVal.type === 0) {
+            my_send.message = this.conversionFace(newVal.message)
+            my_send.play = false
+          }
           if (newVal.type === 2) {
             my_send.progress_num = 0
           }
@@ -508,6 +512,7 @@ export default {
               item.content
                 ? (item.content = this.conversionFace(item.content))
                 : (item.message = this.conversionFace(item.message))
+              item.play = false
             } else if (item.type === 2) {
               item.progress = false
               item.progress_num = 0

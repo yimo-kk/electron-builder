@@ -35,7 +35,11 @@
             </p>
           </div>
           <div v-if="item.forbid || item.state == 2" class="forbid">
-            {{ item.message || item.content }}
+            {{
+              item.to_name == userInfo.kefu_name
+                ? ` ${item.create_time} ${item.message || item.content}`
+                : item.message || item.content
+            }}
           </div>
           <div v-else>
             <div
@@ -63,9 +67,7 @@
                     <p
                       style="word-break: break-word;"
                       v-html="conversionFace(item.content || item.message)"
-                    >
-                      <!-- {{ item.content || item.message }} -->
-                    </p>
+                    ></p>
                   </div>
 
                   <div v-else-if="item.type === 1" class="pictrue">
@@ -120,6 +122,7 @@
                   </div>
                   <div v-else-if="item.type === 3">
                     <Audio
+                      :time="true"
                       @play="
                         (isPlay) => {
                           playRecord(
@@ -145,13 +148,33 @@
                   userInfo.kefu_name
                 }}</span>
                 <div class="chat_content chat_content_right">
-                  <p
-                    style=";word-break: break-word;white-space: pre-line;"
+                  <div
                     v-if="item.type === 0"
-                    v-html="conversionFace(item.content || item.message)"
+                    style="display: flex;alignItems: center;"
                   >
-                    <!-- {{ item.content || item.message }} -->
-                  </p>
+                    <div
+                      v-if="item.type == 0 && item.is_voice && !isName"
+                      class=" flex"
+                      status="stop"
+                      :title="$t('tts')"
+                      no="1"
+                    >
+                      <Audio
+                        :time="false"
+                        @play="
+                          (isPlay) => {
+                            playRecord(item.voice_path, index, isPlay)
+                          }
+                        "
+                        :isPlay="item.play"
+                        :data="item"
+                      ></Audio>
+                    </div>
+                    <p
+                      style=";word-break: break-word;white-space: pre-line;"
+                      v-html="conversionFace(item.content || item.message)"
+                    ></p>
+                  </div>
                   <div v-else-if="item.type === 1" class="pictrue">
                     <img
                       @contextmenu="downloadImg(item.content || item.message)"
@@ -161,7 +184,6 @@
                       alt
                     />
                   </div>
-                  <!-- downloadFile(item.content || item.message, item.file_alias) -->
                   <div
                     :title="$t('download')"
                     v-else-if="item.type === 2"
@@ -205,6 +227,7 @@
                   </div>
                   <div v-else-if="item.type === 3">
                     <Audio
+                      :time="true"
                       @play="
                         (isPlay) => {
                           playRecord(
@@ -225,9 +248,7 @@
           </div>
         </div>
       </div>
-      <div class="input_box">
-        <!-- <InputBox></InputBox> -->
-
+      <div class="input_box" v-show="isInput">
         <div class="other flex_up_down_center">
           <customIcon
             :title="$t('currentInfo.expression')"
@@ -393,7 +414,7 @@ import { isImage, clipboardImg } from '@/utils/libs.js'
 import Recorder from 'js-audio-recorder'
 const recorder = new Recorder({
   sampleBits: 8, // 采样位数，支持 8 或 16，默认是16
-  sampleRate: 22050, // 采样率，支持 11025、16000、22050、24000、44100、48000，根据浏览器默认值
+  sampleRate: 48000, // 采样率，支持 11025、16000、22050、24000、44100、48000，根据浏览器默认值
   numChannels: 1, // 声道，支持 1 或 2， 默认是1e
 })
 import { serviceSendChatFile, uploadVoice } from '@/api/current.js'
@@ -480,7 +501,8 @@ export default {
       type: Number,
       default: 20,
     },
-    isTts: {
+
+    isInput: {
       type: Boolean,
       default: true,
     },
@@ -629,9 +651,10 @@ export default {
       if (bool) {
         audio.src = ''
         this.chatLogListData.forEach((item) => {
-          if (item.type == 3) {
-            item.message ? (item.message.play = false) : (item.play = false)
-          }
+          item.type == 3 && item.message
+            ? (item.message.play = false)
+            : (item.play = false)
+          item.type == 0 && (item.play = false)
         })
       } else {
         this.recordOne(index)
@@ -646,10 +669,14 @@ export default {
     // 只能播放一个其他全为flase
     recordOne(value) {
       this.chatLogListData.forEach((item, index) => {
-        if (index === value && item.type == 3) {
-          item.message ? (item.message.play = true) : (item.play = true)
-        } else if (item.type == 3) {
-          item.message ? (item.message.play = false) : (item.play = false)
+        if (index === value) {
+          item.type == 3 &&
+            (item.message ? (item.message.play = true) : (item.play = true))
+          item.type == 0 && (item.play = true)
+        } else {
+          item.type == 3 &&
+            (item.message ? (item.message.play = false) : (item.play = false))
+          item.type == 0 && (item.play = false)
         }
       })
     },
@@ -701,7 +728,6 @@ export default {
     cancelAudio() {
       this.isVoice = !this.isVoice
       recorder.stop()
-      // this.$emit("cancelAudio");
     },
     // 开始录音
     startRecorder() {
@@ -725,8 +751,11 @@ export default {
     },
     playEnd() {
       this.chatLogListData.forEach((item) => {
-        if (item.type == 3) {
-          item.message ? (item.message.play = false) : (item.play = false)
+        if (item.type == 3 || item.type == 0) {
+          item.type == 3 && item.message
+            ? (item.message.play = false)
+            : (item.play = false)
+          item.type == 0 && (item.play = false)
         }
       })
     },

@@ -1,17 +1,12 @@
 import axios from 'axios'
-import store from './../store'
+import store from '../store'
 import router from '../router'
 import Message from 'ant-design-vue/es/message'
 import Toast from './../components/Toast/toast'
-import { BaseUrl } from '@/config.js'
-const baseURL = process.env.NODE_ENV === 'development' ? BaseUrl.VUE_APP_BASE_URL
-  : BaseUrl.VUE_APP_BASE_URL
-// const baseURL = process.env.NODE_ENV === 'development' ? 'https://server.customerchat.org'
-//   : 'https://server.customerchat.org'
-//  'https://server.nikidigital.net'
+const baseURL = process.env.NODE_ENV === 'development' ? 'https://' : 'https://'
+// const baseURL = process.env.NODE_ENV === 'development' ? 'https://server.nikidigital.net'
+//   : 'https://server.nikidigital.net'
 // : 'http://140.143.128.100:3000'
-
-
 const instance = axios.create({
   baseURL,
   timeout: 50000,
@@ -19,6 +14,7 @@ const instance = axios.create({
 })
 
 instance.interceptors.request.use(config => {
+  config.baseURL = `${config.baseURL}${localStorage.getItem('shopUrl') ? localStorage.getItem('shopUrl') : ''}`
   let accessToken
   let refreshToken
   if (Object.keys(router.history.current.query).length) {
@@ -28,16 +24,6 @@ instance.interceptors.request.use(config => {
       refreshToken = JSON.parse(localStorage.getItem(seller_code))[kefu_code]['refreshToken']
     }
   }
-
-  // let accessToken = localStorage.getItem('accessToken')
-  // let refreshToken = localStorage.getItem('refreshToken')
-  // if(config.url !=="/service/doLogin" && (accessToken && refreshToken)){
-  //   config.headers['refresh-token'] = refreshToken
-  //   config.headers['access-token'] = accessToken 
-  // }else if(config.url !=="/service/doLogin") {
-  //   router.push({name:"Login"})
-  //   return
-  // }
   if ((config.url !== "/service/doLogin" && config.url !== '/service/getKefuInfo') && (accessToken && refreshToken)) {
     config.headers['refresh-token'] = refreshToken
     config.headers['access-token'] = accessToken

@@ -50,6 +50,7 @@ export default {
   offline: 'Offline',
   goAway: 'Go away',
   refresh: 'Refresh',
+  setting: 'Setting',
   outLogin: 'Login out',
   determine: 'Determine',
   cancel: 'Cancel',
@@ -69,6 +70,8 @@ export default {
   confirmCancel: "Are you sure you want to end the conversation with ",
   conversation: '？',
   download: 'Click to download file',
+  updateSuccess: 'Successfully modified',
+  updateError: 'fail to edit',
   transferState: {
     noSservice: 'Customer service is not currently available,',
     to: 'to',
@@ -79,7 +82,8 @@ export default {
     currentChat: 'Current session',
     awaitChat: 'Pending session',
     groupChat: 'Group chat management',
-    leaveMessage: 'Message List'
+    leaveMessage: 'Message List',
+    chatLog: 'Session record'
   },
   currentInfo: {
     userInfo: 'User Info',
@@ -104,6 +108,10 @@ export default {
     transfer: 'Waiting for transfer'
   },
   awaitInfo: {
+    userName: 'Visitor name',
+    searchTime: 'Time',
+    startTime: 'Starting time',
+    endTime: 'End Time',
     title: 'List of waiting users',
     search: 'please enter user name',
     tableTitle: {
@@ -116,6 +124,16 @@ export default {
       Tourist: 'Tourist',
       user: 'User',
       reception: 'Reception'
+    },
+    sessionRecord: {
+      visitorAvatar: 'Visitor avatar',
+      visitorName: 'Visitor name',
+      visitorIp: 'Visitor ip',
+      visitorArea: 'Area',
+      startReceptionTime: 'Start reception time',
+      endReceptionTime: 'End of reception time',
+      receptionTime: 'Reception time',
+      viewLog: 'View chat history'
     }
   },
   groupInfo: {
@@ -136,6 +154,7 @@ export default {
     reason: 'Please enter the reason for being blacklisted'
   },
   login: {
+    shopUrl: 'Business Url',
     shopCode: 'Merchant ID',
     pleaseShopCode: 'Please enter the business ID',
     account: 'Account',
