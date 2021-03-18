@@ -154,6 +154,7 @@ export default {
         if (val.type == 1) return i18n.t('listViewImg')
         if (val.type == 2) return i18n.t('listViewFile')
         if (val.type == 3) return i18n.t('listViewVoice')
+        if (val.type == 4) return i18n.t('listViewEmoji')
       } else {
         return ` `
       }

@@ -33,7 +33,7 @@
               ></ListItem>
             </div>
           </div>
-        </a-col> 
+        </a-col>
         <a-col :span="centerNum" class="full_height">
           <div class="chat_content">
             <a-page-header

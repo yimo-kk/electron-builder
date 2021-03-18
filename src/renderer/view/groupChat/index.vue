@@ -12,7 +12,7 @@
             ]"
           >
             <ListItem
-              :isNum="$store.state.Setting.setting.group_receive?true:false"
+              :isNum="$store.state.Setting.setting.group_receive ? true : false"
               :groupData="item"
               @selectGroup="selectGroup"
             ></ListItem>
@@ -1161,7 +1161,7 @@ export default {
     initGroup() {
       this.isMore = true
       this.getGroupList({
-        kefu_id: this.userInfo.kefu_id,
+        kefu_id: this.userInfo.kefu_id
       }).then((result) => {
         if (this.$store.state.Socket.chatList.length) {
           if (!this.activityGroup.activityId) {

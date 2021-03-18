@@ -1,6 +1,6 @@
 
 import { getGroupList } from "@/api/group.js";
-import { isArr, deleteListValue, compare, compareTime, getQueryString } from "@/utils/libs.js";
+import { isArr, deleteListValue, compare, compareTime, getQueryString, repetition } from "@/utils/libs.js";
 import Toast from '@/components/Toast/toast'
 import router from '@/router'
 import { getCustomerQueue } from "@/api/await.js";
@@ -198,7 +198,8 @@ const mutations = {
   //新待接待
   SOCKET_addQueue: (state, data) => {
     let oldList = JSON.parse(JSON.stringify(state.awaitList))
-    if (!state.awaitList.includes(data)) {
+    //  判断下有没有已经存在的
+    if (!isArr(state.awaitList, 'customer_id', data.customer_id)) {
       oldList.push(data)
       oldList.sort(compare('level'));
       state.awaitList = oldList
@@ -370,7 +371,7 @@ const actions = {
   getAwaitList ({ commit }, data) {
     return new Promise(async (resolve, reject) => {
       await getCustomerQueue(data).then((result) => {
-        let awaitList = result.data;
+        let awaitList = repetition(result.data, 'customer_id')
         commit('SET_AWAIT_LIST', awaitList)
         resolve(awaitList);
       })
@@ -383,8 +384,9 @@ const actions = {
   getCurrentListData ({ state, commit }) {
     return new Promise(async (resolve, reject) => {
       await getNowServiceList().then((result) => {
+        let arr = repetition(result.data, 'uid')
         let list = JSON.parse(JSON.stringify(state.currentChatList))
-        let currentChatList = result.data.map(item => {
+        let currentChatList = arr.map(item => {
           list.forEach(val => {
             val.isMultitap && val.username === item.username ? item.isMultitap = true : item.isMultitap = false
           })

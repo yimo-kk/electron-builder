@@ -233,3 +233,28 @@ export function getQueryString (name) {
   return args;
 
 }
+/**
+ * 数组去重
+ * list 数组
+ * id 数组中的对象的唯一表示 不传 就单纯数组去重
+ */
+export function repetition (list, id) {
+  let arr = []
+  list.forEach((item) => {
+    if (id) {
+      if (arr.length) {
+        arr.forEach((val) => {
+          if (val[id] !== item[id]) {
+            arr.push(item)
+          }
+        })
+      } else {
+        arr.push(item)
+      }
+    } else {
+      !arr.includes(item) && arr.push(item)
+    }
+  })
+
+  return arr
+}

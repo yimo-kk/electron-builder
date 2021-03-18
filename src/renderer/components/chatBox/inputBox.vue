@@ -30,12 +30,11 @@ Ctrl/Shift+Enter ${$t('currentInfo.wrap')}`
 </template>
 
 <script>
-import { isImage } from '../../utils/libs'
 const { remote } = require('electron')
 const clipboard = require('electron').clipboard
 
 export default {
-  name: 'inputBox2',
+  name: 'inputBox',
   components: {},
   props: {
     isName: {

@@ -70,7 +70,10 @@
                     ></p>
                   </div>
 
-                  <div v-else-if="item.type === 1" class="pictrue">
+                  <div
+                    v-else-if="item.type === 1 || item.type === 4"
+                    :class="[item.type == 1 ? 'pictrue' : 'emoji-size']"
+                  >
                     <img
                       @contextmenu="downloadImg(item.content || item.message)"
                       @click="viewImg(item.content || item.message)"
@@ -175,7 +178,10 @@
                       v-html="conversionFace(item.content || item.message)"
                     ></p>
                   </div>
-                  <div v-else-if="item.type === 1" class="pictrue">
+                  <div
+                    v-else-if="item.type === 1 || item.type === 4"
+                    :class="[item.type == 1 ? 'pictrue' : 'emoji-size']"
+                  >
                     <img
                       @contextmenu="downloadImg(item.content || item.message)"
                       @load="loadImg"
@@ -309,7 +315,7 @@
           ></div>
           <div class="browBoxs flex_center">
             <div class="browBox">
-              <ul>
+              <ul v-show="currentFace == 'emoji'">
                 <li
                   v-html="faceHtml(item)"
                   v-for="(item, index) in faceList"
@@ -317,6 +323,55 @@
                   @click.stop="getBrow(item)"
                 ></li>
               </ul>
+              <div class="heart-emoji" v-show="currentFace == 'heart'">
+                <div class="loading">
+                  <a-spin v-show="heartEmojiLoading">
+                    <a-icon
+                      slot="indicator"
+                      type="loading"
+                      style="font-size: 24px"
+                      spin
+                    />
+                  </a-spin>
+                </div>
+                <div
+                  class="heart-emoji-list"
+                  v-for="item in heartEmoji"
+                  :key="item.id"
+                  @click.stop="sendHeartEmoji(item)"
+                >
+                  <img
+                    class="phiz_img"
+                    :src="item.phiz_img"
+                    alt=""
+                    :title="item.remarks"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="more-emoji">
+              <div
+                :class="[
+                  'emoji',
+                  currentFace == 'emoji' ? 'more-emoji-selected' : '',
+                ]"
+                @click="handoverEmoji"
+              >
+                <customIcon
+                  :title="$t('currentInfo.expression')"
+                  type="icon-biaoqing1"
+                  class="emoji-item"
+                ></customIcon>
+              </div>
+              <div
+                @click="handoverHeart"
+                :class="[
+                  'emoji',
+                  currentFace == 'heart' ? 'more-emoji-selected' : '',
+                ]"
+              >
+                <a-icon type="heart" class="emoji-item" />
+              </div>
             </div>
           </div>
         </div>
@@ -409,8 +464,7 @@
 <script>
 import { emojisAmap } from '../../assets/face/index'
 const { dialog } = require('electron').remote
-const path = require('path')
-import { isImage, clipboardImg } from '@/utils/libs.js'
+import { clipboardImg } from '@/utils/libs.js'
 import Recorder from 'js-audio-recorder'
 const recorder = new Recorder({
   sampleBits: 8, // 采样位数，支持 8 或 16，默认是16
@@ -418,7 +472,7 @@ const recorder = new Recorder({
   numChannels: 1, // 声道，支持 1 或 2， 默认是1e
 })
 import { serviceSendChatFile, uploadVoice } from '@/api/current.js'
-const appData = require('@/assets/emojis.json')
+import { getPhizList } from '@/api/index.js'
 import Audio from './audio'
 import InputBox_ from './inputBox'
 import chat from '@/mixins/chat'
@@ -518,6 +572,8 @@ export default {
       loading: false,
       faceShow: false,
       faceList: [],
+      heartEmoji: [],
+      heartEmojiLoading: false,
       sendText: JSON.parse(JSON.stringify(this.text)),
       sendType: 0,
       isVoice: false,
@@ -537,6 +593,7 @@ export default {
       sendFiletoName: '',
       currentsendData: null,
       insertion: '',
+      currentFace: 'emoji', // 默认选择 表情
     }
   },
   computed: {
@@ -621,7 +678,8 @@ export default {
 
     // 获取表情
     faceContent() {
-      this.faceShow = !this.faceShow
+      // this.faceShow = !this.faceShow
+      this.faceShow = true
       this.faceShow == true
         ? (this.faceList = Object.values(emojisAmap))
         : (this.faceList = [])
@@ -629,7 +687,13 @@ export default {
     // 获取用户点击表情之后的标签 ，存放到输入框内
     getBrow(val) {
       this.$refs.InputBox_.insertEmoji(val)
+      this.faceShow = false
     },
+    sendHeartEmoji(item) {
+      this.$emit('sendMessage', item.phiz_img, 4)
+      this.faceShow = false
+    },
+
     // 来的消息显示在最下面
     messageDown() {
       if (this.chatLogListData.length && this.isMore == false) {
@@ -964,7 +1028,6 @@ export default {
       e.preventDefault()
       e.stopPropagation()
       this.currentsendData = e.dataTransfer.files[0]
-
       if (!this.currentsendData) {
         return
       }
@@ -1001,6 +1064,32 @@ export default {
     isImageTo(str) {
       var reg = /(png|jpg|gif|jpeg|webp)$/
       return reg.test(str)
+    },
+    // 点击 表情
+    handoverEmoji() {
+      if (this.currentFace === 'emoji') return
+      this.currentFace = 'emoji'
+      this.faceContent()
+    },
+    // 点击 自定义表情tab
+    handoverHeart() {
+      if (this.currentFace === 'heart') return
+      this.currentFace = 'heart'
+      this.getPhizListData({
+        seller_code: this.userInfo.seller_code || this.$route.query.seller_code,
+      })
+    },
+    // 获取自定义表情
+    getPhizListData(param) {
+      this.heartEmojiLoading = true
+      getPhizList(param)
+        .then((res) => {
+          this.heartEmoji = res.data
+          this.heartEmojiLoading = false
+        })
+        .catch((err) => {
+          console.log(err)
+        })
     },
   },
   mounted() {

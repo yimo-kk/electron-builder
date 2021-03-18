@@ -49,6 +49,11 @@
               <p @click="setting">{{ $t('setting') }}</p>
             </a-menu-item>
             <a-menu-item>
+              <p @click="telegramSetting">
+                {{ $t('telegramAccount') }}
+              </p>
+            </a-menu-item>
+            <a-menu-item>
               <p @click="refresh">{{ $t('refresh') }}</p>
             </a-menu-item>
             <a-menu-item>
@@ -72,65 +77,86 @@
     >
       <div class="setting-style">
         <a-form>
-          <a-form-item label="转接提示设置：">
+          <a-form-item :label="$t('transfer_task')">
             <a-checkbox v-model="settingData.transfer_task">
-              任务栏闪烁
+              {{ $t('task') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.transfer_tray">
-              托盘闪烁
+              {{ $t('tray') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.transfer_sound">
-              声音提示
+              {{ $t('voicePrompt') }}
             </a-checkbox>
           </a-form-item>
-          <a-form-item label="待接入提示设置：">
+          <a-form-item :label="$t('toBeConnected')">
             <a-checkbox v-model="settingData.menu_prompt">
-              菜单栏等待接入数
+              {{ $t('waitNum') }}
             </a-checkbox>
           </a-form-item>
-          <a-form-item label="群提示设置：">
+          <a-form-item :label="$t('groupPrompt')">
             <a-checkbox v-model="settingData.group_task">
-              任务栏闪烁
+              {{ $t('task') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.group_tray">
-              托盘闪烁
+              {{ $t('tray') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.group_sound">
-              声音提示
+              {{ $t('voicePrompt') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.group_receive">
-              收到用户消息数量
+              {{ $t('userMessageNum') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.group_menu">
-              菜单栏总消息数
+              {{ $t('menuMessageNum') }}
             </a-checkbox>
           </a-form-item>
-          <a-form-item label="用户提示设置：">
+          <a-form-item :label="$t('userPrompt')">
             <a-checkbox v-model="settingData.user_task">
-              任务栏闪烁
+              {{ $t('task') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.user_tray">
-              托盘闪烁
+              {{ $t('tray') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.user_sound">
-              声音提示
+              {{ $t('voicePrompt') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.user_join">
-              用户进入提示
+              {{ $t('userEntry') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.user_receive">
-              收到用户消息数量
+              {{ $t('userMessageNum') }}
             </a-checkbox>
             <a-checkbox v-model="settingData.menu_total">
-              菜单栏总消息数
+              {{ $t('menuMessageNum') }}
             </a-checkbox>
           </a-form-item>
-          <a-form-item label="留言提示设置：">
+          <a-form-item :label="$t('messagePrompt')">
             <a-checkbox v-model="settingData.stay_num">
-              菜单栏总留言数
+              {{ $t('meneTotal') }}
             </a-checkbox>
           </a-form-item>
         </a-form>
+      </div>
+    </a-modal>
+    <a-modal
+      :title="$t('telegramAccount')"
+      :visible="telegramShow"
+      @ok="telegramOk"
+      @cancel="telegramShow = false"
+      :okText="$t('submit')"
+      :cancelText="$t('cancel')"
+    >
+      <div class="telegram">
+        <p>{{ $t('binding') }}</p>
+        <a-switch
+          style="margin:0 5px"
+          :checked-children="$t('yes')"
+          :un-checked-children="$t('no')"
+          v-model="selectStatus"
+        />
+        <span class="prompt">{{
+          $t('accountStart') + userInfo.kefu_code + $t('accountEnd')
+        }}</span>
       </div>
     </a-modal>
   </div>
@@ -142,35 +168,17 @@ import moment from 'moment'
 import 'moment/locale/zh-cn'
 moment.locale('zh-cn')
 import { mapMutations, mapActions } from 'vuex'
+import { isBindTelegram, saveBindTelegram } from '@/api/index'
 
-// const multitapPrompt = [
-//   { label: '任务栏闪烁', value: 1 },
-//   { label: '托盘闪烁', value: 2 },
-//   { label: '声音提示', value: 3 },
-// ]
-// const userPrompt = [
-//   { label: '任务栏闪烁', value: 1 },
-//   { label: '托盘闪烁', value: 2 },
-//   { label: '声音提示', value: 3 },
-//   { label: '用户进入提示', value: 4 },
-//   { label: '收到用户消息数量', value: 5 },
-//   { label: '菜单栏总消息数', value: 6 },
-// ]
-// const groupPrompt = [
-//   { label: '任务栏闪烁', value: 1 },
-//   { label: '托盘闪烁', value: 2 },
-//   { label: '声音提示', value: 3 },
-//   { label: '收到群消息数量', value: 4 },
-//   { label: '菜单栏总消息数', value: 5 },
-// ]
-// const awaitPrompt = [{ label: '菜单栏等待接入数', value: 1 }]
-// const messagePrompt = [{ label: '菜单栏总留言数', value: 1 }]
 export default {
   name: 'ServiceHeader',
   inject: ['reload'],
   mixins: [common()],
   data() {
     return {
+      selectStatus: false,
+      telegramShow: false,
+      istelegram: false,
       settingData: {
         group_menu: true,
         group_receive: true,
@@ -240,7 +248,6 @@ export default {
     },
     refresh() {
       location.reload()
-      // this.reload()
     },
     setStatus(index) {
       if (this.kefuStatus == index) return
@@ -277,7 +284,6 @@ export default {
         moment.locale('zh')
         this.$i18n.locale = 'zh'
         localStorage.setItem('lang', 'zh')
-        // this.setLocale()
       }
     },
     setting() {
@@ -298,6 +304,63 @@ export default {
           this.$message.error(this.$t('updateError'))
         })
       this.isSetting = false
+    },
+    telegramSetting() {
+      this.isBindTelegram(this.userInfo.kefu_code)
+        .then((result) => {
+          this.telegramShow = true
+          this.selectStatus = result
+          this.istelegram = result
+        })
+        .catch((err) => {
+          console.log(err)
+          this.$message.error(this.$t('connectError'))
+        })
+    },
+    telegramOk() {
+      this.isBindTelegram(this.userInfo.kefu_code)
+        .then((result) => {
+          if (!result && this.selectStatus) {
+            this.$confirm({
+              title: this.$t('addError'),
+              content:
+                this.$t('accountStart') +
+                this.userInfo.kefu_code +
+                this.$t('accountEnd'),
+              okText: this.$t('determine'),
+            })
+          } else {
+            saveBindTelegram({
+              kefu_code: this.userInfo.kefu_code,
+              telegram_status: this.selectStatus ? 1 : 0,
+            })
+              .then((result) => {
+                this.telegramShow = false
+                this.$message.success(this.$t('updateSuccess'))
+              })
+              .catch((err) => {
+                this.telegramShow = false
+                this.$message.error(this.$t('connectError'))
+              })
+          }
+        })
+        .catch((err) => {
+          console.log(err)
+          this.$message.error(this.$t('connectError'))
+        })
+    },
+    switchChange() {},
+    isBindTelegram(kefu_code) {
+      return new Promise(async (resolve, reject) => {
+        await isBindTelegram({ kefu_code: kefu_code })
+          .then((result) => {
+            let res = result.telegram_status ? true : false
+            resolve(res)
+          })
+          .catch((err) => {
+            reject(err)
+          })
+      })
     },
   },
   mounted() {
@@ -342,6 +405,15 @@ export default {
   height: 54vh;
   overflow: auto;
   .scrollbar();
+}
+.telegram {
+  display: flex;
+  padding: 10px;
+  font-size: 13px;
+  .prompt {
+    font-size: 12px;
+    color: #1e9fff;
+  }
 }
 /deep/ .ant-form-item {
   margin-bottom: 0px;
