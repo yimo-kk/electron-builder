@@ -302,6 +302,8 @@
           :valueConten="sendText"
           @textToSpeech="textToSpeech"
           @sendMessage="sendMessage"
+          @changeLanguage="changeLanguage"
+          :isLang='isLang'
         ></InputBox_>
         <div v-show="faceShow">
           <div
@@ -560,6 +562,10 @@ export default {
       type: Boolean,
       default: true,
     },
+    isLang:{
+         type: Boolean,
+      default: true,
+    }
   },
   components: {
     Audio,
@@ -1060,6 +1066,10 @@ export default {
     // 当选择文字转语音
     textToSpeech(e) {
       this.$emit('textToSpeech', e)
+    },
+        // 切换语言
+    changeLanguage(e) {
+       this.$emit("changeLanguage", e);
     },
     isImageTo(str) {
       var reg = /(png|jpg|gif|jpeg|webp)$/

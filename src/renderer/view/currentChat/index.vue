@@ -66,6 +66,7 @@
               @getLog="getLog"
               v-model="text"
               @textToSpeech="textToSpeech"
+              @changeLanguage="changeLanguage"
             ></ChatBox>
           </div>
         </a-col>
@@ -246,6 +247,7 @@ export default {
       count: 0,
       isMore: false,
       isTextToSpeech: false,
+      language:'zh-cn' ,
       text: '',
     }
   },
@@ -410,6 +412,7 @@ export default {
           })
         }
         this.isTextToSpeech = false
+        this.language = 'zh-cn' 
       },
       deep: true,
     },
@@ -621,9 +624,11 @@ export default {
         type: type,
       }
       let sendMessage = JSON.parse(JSON.stringify(my_send))
+      
       if (type === 0) {
         // sendMessage.message = conversion(my_send.message)
         sendMessage.is_voice = this.isTextToSpeech ? 1 : 0
+        sendMessage.lang=  this.language
       }
       this.$socket.emit('message', sendMessage)
       this.text = ''
@@ -767,6 +772,9 @@ export default {
     },
     textToSpeech(val) {
       this.isTextToSpeech = val
+    },
+    changeLanguage(val) {
+      this.language = val
     },
     autoCloseChat(id, userNmae) {
       closeChat({

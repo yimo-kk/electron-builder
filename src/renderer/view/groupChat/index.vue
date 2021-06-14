@@ -40,6 +40,7 @@
             ref="groupChatBox"
             :chatLogList="chatLogList"
             @sendMessage="sendMessage"
+               @changeLanguage="changeLanguage"
             @uploadImage="uploadImage"
             @stopSpeak="stopSpeak"
             @kickOut="executionKickOut"
@@ -53,6 +54,7 @@
             :isMore="isMore"
             :count="count"
             :isTts="false"
+            :isLang='true'
             @getLog="getLog"
           ></ChatBox>
         </div>
@@ -422,6 +424,7 @@ export default {
       minute: 0,
       permanent: false,
       isOther: false,
+      language:'zh-cn' ,
     }
   },
   computed: {
@@ -572,6 +575,7 @@ export default {
           })
         this.rightNum = 0
         this.centerNum = 19
+         this.language = 'zh-cn' 
       },
       deep: true,
     },
@@ -672,6 +676,10 @@ export default {
     ...mapMutations(['SET_CHAT_LIST', 'SET_ACTIVITY_GROUP']),
     ...mapActions(['getGroupList']),
     moment,
+    // 切换语言
+    changeLanguage(val) {
+      this.language = val
+    },
     sendMessage(content, type) {
       if (!content.length && type === 0) return
       let my_send = {
@@ -686,6 +694,9 @@ export default {
         state: 1,
         type: type,
         from_ip: this.$store.state.Login.userIp.ip,
+      }
+          if (type === 0) {
+            my_send.lang=  this.language
       }
       let sendMessage = JSON.parse(JSON.stringify(my_send))
       // type === 0 && (sendMessage.message = conversion(my_send.message))
